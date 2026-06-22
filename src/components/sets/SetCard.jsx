@@ -22,14 +22,12 @@ export default function SetCard({ set }) {
   const score1 = slot1?.standing?.stats?.score?.value ?? '-';
   const score2 = slot2?.standing?.stats?.score?.value ?? '-';
 
-  // Personnages depuis l'API (souvent null)
-  const participants1 = entrant1?.participants ?? [];
-  const selections1   = participants1[0]?.selections ?? [];
-  const apiChar1      = getCharacterFromSelections(selections1, entrant1?.id);
+  // Personnages depuis l'API — selections au niveau du slot (schéma Start.gg réel)
+  const selections1 = slot1?.selections ?? [];
+  const apiChar1    = getCharacterFromSelections(selections1, entrant1?.id);
 
-  const participants2 = entrant2?.participants ?? [];
-  const selections2   = participants2[0]?.selections ?? [];
-  const apiChar2      = getCharacterFromSelections(selections2, entrant2?.id);
+  const selections2 = slot2?.selections ?? [];
+  const apiChar2    = getCharacterFromSelections(selections2, entrant2?.id);
 
   // Override manuel depuis le store
   const override1 = characterOverrides[set.id]?.p1CharId

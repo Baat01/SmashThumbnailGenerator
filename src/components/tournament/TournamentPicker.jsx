@@ -1,7 +1,6 @@
 import useAppStore from '../../store/appStore';
 import { useSets } from '../../hooks/useSets';
 
-/** Formatte un timestamp Unix en date lisible */
 function formatDate(ts) {
   if (!ts) return '';
   return new Date(ts * 1000).toLocaleDateString('fr-FR', {
@@ -11,17 +10,16 @@ function formatDate(ts) {
 
 export default function TournamentPicker() {
   const { tournaments, selectedTournament, selectTournament, setStep, logout, user } = useAppStore();
-  const { loadSets } = useSets();
+  const { loadEvents, eventsLoading, events } = useSets();
 
   async function handleSelect(tournament) {
     selectTournament(tournament);
-    await loadSets(tournament);
-    setStep(2);
+    await loadEvents(tournament);
+    setStep(2); // Passe à l'étape Sets/Events
   }
 
   return (
     <div className="animate-fade-in-up px-4 max-w-4xl mx-auto w-full">
-      {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
           <h2 className="text-2xl font-bold text-white">
@@ -42,43 +40,38 @@ export default function TournamentPicker() {
         </button>
       </div>
 
-      {/* Grille de tournois */}
       {tournaments.length === 0 ? (
         <div className="glass p-12 text-center text-[var(--color-muted)]">
           <div className="text-4xl mb-3">🏜️</div>
           <p>Aucun tournoi trouvé sur ce compte.</p>
-          <p className="text-xs mt-2">Seuls les tournois <em>passés et organisés par toi</em> sont affichés.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {tournaments.map(t => {
-            const logo = t.images?.find(img => img.type === 'profile')?.url
-                      ?? t.images?.[0]?.url
-                      ?? null;
+            const logo = t.images?.find(img => img.type === 'profile')?.url ?? t.images?.[0]?.url ?? null;
             const isSelected = selectedTournament?.id === t.id;
+            const isLoading  = isSelected && eventsLoading;
 
             return (
               <button
                 key={t.id}
                 id={`tournament-${t.id}`}
                 onClick={() => handleSelect(t)}
+                disabled={eventsLoading}
                 className={`
                   glass text-left p-4 flex gap-4 items-start cursor-pointer
                   transition-all duration-200 hover:border-[var(--color-accent)]/50
                   hover:bg-white/5 active:scale-95 group
+                  disabled:opacity-60 disabled:cursor-wait
                   ${isSelected ? 'border-[var(--color-accent)] bg-[var(--color-accent)]/10' : ''}
                 `}
               >
-                {/* Logo */}
                 <div className="w-14 h-14 rounded-lg overflow-hidden shrink-0 bg-[var(--color-surface-2)] flex items-center justify-center">
-                  {logo ? (
-                    <img src={logo} alt={t.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-2xl">🏆</span>
-                  )}
+                  {logo
+                    ? <img src={logo} alt={t.name} className="w-full h-full object-cover" />
+                    : <span className="text-2xl">🏆</span>
+                  }
                 </div>
-
-                {/* Infos */}
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-white text-sm leading-tight group-hover:text-[var(--color-accent)] transition-colors line-clamp-2">
                     {t.name}
@@ -90,11 +83,14 @@ export default function TournamentPicker() {
                     </span>
                   )}
                 </div>
-
-                {/* Selected badge */}
-                {isSelected && (
+                {isLoading ? (
+                  <svg className="animate-spin w-4 h-4 shrink-0 text-[var(--color-accent)]" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                  </svg>
+                ) : isSelected ? (
                   <span className="shrink-0 text-[var(--color-accent)] text-lg">✓</span>
-                )}
+                ) : null}
               </button>
             );
           })}

@@ -26,7 +26,11 @@ const useAppStore = create((set, get) => ({
   tournaments: [],
   selectedTournament: null,
   setTournaments: (tournaments) => set({ tournaments }),
-  selectTournament: (tournament) => set({ selectedTournament: tournament, sets: [], selectedSets: [] }),
+  selectTournament: (tournament) => set({ selectedTournament: tournament, sets: [], selectedSets: [], events: [] }),
+
+  // ── Events (sous-niveaux du tournoi) ────────────────────────────
+  events: [],
+  setEvents: (events) => set({ events }),
 
   // ── Sets ─────────────────────────────────────────────────────────
   sets: [],
@@ -61,10 +65,11 @@ const useAppStore = create((set, get) => ({
     });
   },
 
-  // ── Layout (image de fond) ───────────────────────────────────────
-  layoutImage: null,          // data URL de l'image importée
-  layoutImageName: '',
-  setLayoutImage: (dataUrl, name) => set({ layoutImage: dataUrl, layoutImageName: name }),
+  // ── Layout template (JSON exporté par SmashThumbnailGenerator) ──────────
+  layoutTemplate: null,
+  layoutTemplateName: '',
+  setLayoutTemplate: (template, name) => set({ layoutTemplate: template, layoutTemplateName: name }),
+  clearLayoutTemplate: () => set({ layoutTemplate: null, layoutTemplateName: '' }),
 
   // ── Generation ───────────────────────────────────────────────────
   isGenerating: false,

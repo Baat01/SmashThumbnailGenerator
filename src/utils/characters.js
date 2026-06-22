@@ -100,14 +100,27 @@ export const CHARACTER_MAP = Object.fromEntries(
 );
 
 /**
- * Récupère le caractère à partir de l'objet selections de l'API Start.gg.
- * Retourne null si aucune sélection n'est disponible.
+ * Récupère le personnage depuis le tableau `selections` d'un slot Start.gg.
+ * Les selections sont maintenant au niveau du slot (pas du participant).
+ *
+ * @param {Array}  selections  - slot.selections[]
+ * @param {string} entrantId   - l'id de l'entrant du slot
+ * @returns {Character|null}
  */
 export function getCharacterFromSelections(selections, entrantId) {
   if (!selections || selections.length === 0) return null;
-  const sel = selections.find(s => s?.entrant?.id === entrantId);
-  if (!sel?.selectionValue) return null;
-  return CHARACTER_MAP[sel.selectionValue] ?? null;
+
+  // On cherche une sélection de type CHARACTER pour cet entrant
+  const sel = selections.find(
+    s => s?.selectionType === 'CHARACTER' && s?.entrant?.id === entrantId
+  );
+
+  // Fallback : si une seule sélection sans filtre d'entrant
+  const fallback = !sel && selections.find(s => s?.selectionType === 'CHARACTER');
+  const target = sel ?? fallback;
+
+  if (!target?.selectionValue) return null;
+  return CHARACTER_MAP[target.selectionValue] ?? null;
 }
 
 /**

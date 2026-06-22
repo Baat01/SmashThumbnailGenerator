@@ -2,14 +2,9 @@ import { GraphQLClient } from 'graphql-request';
 
 const STARTGG_ENDPOINT = 'https://api.start.gg/gql/alpha';
 
-/**
- * Crée un client GraphQL authentifié avec le token Bearer fourni.
- */
 export function createClient(apiKey) {
   return new GraphQLClient(STARTGG_ENDPOINT, {
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-    },
+    headers: { Authorization: `Bearer ${apiKey}` },
   });
 }
 
@@ -33,10 +28,7 @@ export const GET_USER_TOURNAMENTS = `
           slug
           startAt
           numAttendees
-          images {
-            url
-            type
-          }
+          images { url type }
         }
       }
     }
@@ -44,87 +36,60 @@ export const GET_USER_TOURNAMENTS = `
 `;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// REQUÊTE 2 : Sets complétés d'un tournoi (avec pagination)
+// REQUÊTE 2a : Events d'un tournoi (slug)
 // ─────────────────────────────────────────────────────────────────────────────
-export const GET_TOURNAMENT_SETS = `
-  query GetTournamentSets($slug: String!, $page: Int!) {
+export const GET_TOURNAMENT_EVENTS = `
+  query GetTournamentEvents($slug: String!) {
     tournament(slug: $slug) {
       id
       name
       events {
         id
         name
-        sets(
-          page: $page
-          perPage: 30
-          filters: { state: 3 }
-        ) {
-          pageInfo {
-            total
-            totalPages
-          }
-          nodes {
-            id
-            fullRoundText
-            round
-            winnerId
-            slots {
-              standing {
-                stats {
-                  score {
-                    value
-                  }
-                }
-              }
-              entrant {
-                id
-                name
-                participants {
-                  player {
-                    id
-                    gamerTag
-                    user {
-                      slug
-                      images {
-                        url
-                        type
-                      }
-                    }
-                  }
-                  selections {
-                    selectionValue
-                    entrant {
-                      id
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
+        numEntrants
+        state
       }
     }
   }
 `;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// REQUÊTE 3 : Phases d'un événement
+// REQUÊTE 2b : Sets d'un event (par eventId, paginé)
 // ─────────────────────────────────────────────────────────────────────────────
-export const GET_EVENT_PHASES = `
-  query GetEventPhases($eventId: ID!) {
+export const GET_EVENT_SETS = `
+  query GetEventSets($eventId: ID!, $page: Int!) {
     event(id: $eventId) {
       id
       name
-      phases {
-        id
-        name
-        bracketType
-        phaseGroups(query: { page: 1, perPage: 8 }) {
-          nodes {
-            id
-            displayIdentifier
-            wave {
-              identifier
+      sets(
+        page: $page
+        perPage: 50
+      ) {
+        pageInfo {
+          total
+          totalPages
+        }
+        nodes {
+          id
+          fullRoundText
+          round
+          winnerId
+          state
+          slots {
+            standing {
+              stats {
+                score { value }
+              }
+            }
+            entrant {
+              id
+              name
+              participants {
+                player {
+                  id
+                  gamerTag
+                }
+              }
             }
           }
         }
@@ -139,53 +104,124 @@ export const GET_EVENT_PHASES = `
 
 /**
  * Vérifie la clé API et récupère les tournois de l'utilisateur.
- * @returns {{ user, tournaments }}
  */
 export async function fetchUserTournaments(apiKey) {
   const client = createClient(apiKey);
   const data = await client.request(GET_USER_TOURNAMENTS);
   const user = data?.currentUser;
   if (!user) throw new Error('Clé API invalide ou droits insuffisants.');
-  const tournaments = user.tournaments?.nodes ?? [];
-  return { user, tournaments };
+  return { user, tournaments: user.tournaments?.nodes ?? [] };
 }
 
 /**
- * Récupère tous les sets complétés d'un tournoi (toutes les pages).
- * @returns {{ sets, eventId, eventName }}
+ * Étape 1 : Récupère les events d'un tournoi.
+ * Normalise le slug (retire le préfixe "tournament/" si présent).
  */
-export async function fetchTournamentSets(apiKey, slug) {
+export async function fetchTournamentEvents(apiKey, slug) {
   const client = createClient(apiKey);
-  let allSets = [];
-  let eventId = null;
-  let eventName = null;
 
-  const firstPage = await client.request(GET_TOURNAMENT_SETS, { slug, page: 1 });
-  const events = firstPage?.tournament?.events ?? [];
+  const normalizedSlug = slug.startsWith('tournament/')
+    ? slug.replace(/^tournament\//, '')
+    : slug;
 
-  for (const event of events) {
-    const { pageInfo, nodes } = event.sets;
-    eventId = event.id;
-    eventName = event.name;
-    allSets = [...allSets, ...nodes.map(s => ({ ...s, eventName: event.name }))];
+  console.log('[startgg] fetchTournamentEvents — slug:', normalizedSlug);
 
-    // Pagination automatique si plusieurs pages
-    for (let p = 2; p <= pageInfo.totalPages; p++) {
-      const nextPage = await client.request(GET_TOURNAMENT_SETS, { slug, page: p });
-      const nextEvent = nextPage?.tournament?.events?.find(e => e.id === event.id);
-      if (nextEvent) {
-        allSets = [...allSets, ...nextEvent.sets.nodes.map(s => ({ ...s, eventName: event.name }))];
-      }
-    }
+  const data = await client.request(GET_TOURNAMENT_EVENTS, { slug: normalizedSlug });
+  const tournament = data?.tournament;
+
+  if (!tournament) {
+    throw new Error(`Tournoi introuvable pour le slug "${normalizedSlug}"`);
   }
 
-  return { sets: allSets, eventId, eventName };
+  console.log('[startgg] Events trouvés:', tournament.events?.length ?? 0, tournament.events);
+  return tournament.events ?? [];
+}
+
+/**
+ * Étape 2 : Récupère tous les sets d'un event (toutes les pages),
+ * filtre côté client pour ne garder que les sets avec un winner.
+ */
+export async function fetchEventSets(apiKey, eventId, eventName) {
+  const client = createClient(apiKey);
+  let allSets = [];
+
+  console.log(`[startgg] fetchEventSets — eventId: ${eventId} (${eventName})`);
+
+  const firstPage = await client.request(GET_EVENT_SETS, { eventId, page: 1 });
+  const eventData = firstPage?.event;
+
+  if (!eventData) {
+    console.warn('[startgg] Event introuvable pour id:', eventId);
+    return [];
+  }
+
+  const { pageInfo, nodes } = eventData.sets;
+  console.log(`[startgg] Page 1/${pageInfo.totalPages} — ${nodes.length} sets, total: ${pageInfo.total}`);
+
+  allSets = nodes.map(s => ({ ...s, eventName }));
+
+  for (let p = 2; p <= pageInfo.totalPages; p++) {
+    const nextPage = await client.request(GET_EVENT_SETS, { eventId, page: p });
+    const pageNodes = nextPage?.event?.sets?.nodes ?? [];
+    console.log(`[startgg] Page ${p}/${pageInfo.totalPages} — ${pageNodes.length} sets`);
+    allSets = [...allSets, ...pageNodes.map(s => ({ ...s, eventName }))];
+  }
+
+  console.log(`[startgg] Total sets bruts pour "${eventName}":`, allSets.length);
+  console.log('[startgg] États des sets:', [...new Set(allSets.map(s => s.state))]);
+
+  // Un set est terminé si winnerId est défini
+  const completedSets = allSets.filter(s => s.winnerId != null);
+  console.log(`[startgg] Sets complétés (winnerId non null):`, completedSets.length);
+
+  return completedSets;
+}
+
+/**
+ * Fonction principale : récupère tous les sets complétés de tous les events d'un tournoi.
+ */
+export async function fetchTournamentSets(apiKey, slug) {
+  const events = await fetchTournamentEvents(apiKey, slug);
+
+  if (events.length === 0) {
+    console.warn('[startgg] Aucun event trouvé pour ce tournoi.');
+    return { sets: [], events: [] };
+  }
+
+  let allSets = [];
+  for (const event of events) {
+    const eventSets = await fetchEventSets(apiKey, event.id, event.name);
+    allSets = [...allSets, ...eventSets];
+  }
+
+  console.log('[startgg] Total sets complétés (tous events confondus):', allSets.length);
+  return { sets: allSets, events };
 }
 
 /**
  * Récupère les phases d'un événement.
- * @returns {Phase[]}
  */
+export const GET_EVENT_PHASES = `
+  query GetEventPhases($eventId: ID!) {
+    event(id: $eventId) {
+      id
+      name
+      phases {
+        id
+        name
+        bracketType
+        phaseGroups(query: { page: 1, perPage: 8 }) {
+          nodes {
+            id
+            displayIdentifier
+            wave { identifier }
+          }
+        }
+      }
+    }
+  }
+`;
+
 export async function fetchEventPhases(apiKey, eventId) {
   const client = createClient(apiKey);
   const data = await client.request(GET_EVENT_PHASES, { eventId });
