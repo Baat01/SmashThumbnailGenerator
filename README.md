@@ -1,76 +1,16 @@
-<!-- PROJECT SHIELDS -->
-<!--
-*** This template uses markdown "reference style" links for readability.
-*** Reference links are enclosed in brackets [ ] instead of parentheses ( ).
-*** See the bottom of this document for the declaration of the reference variables
-*** for contributors-url, forks-url, etc. This is an optional, concise syntax you may use.
-*** https://www.markdownguide.org/basic-syntax/#reference-style-links
--->
+# React + Vite
 
-[![Contributors][contributors-shield]][contributors-url] [![Forks][forks-shield]][forks-url] [![Stargazers][stars-shield]][stars-url] [![Issues][issues-shield]][issues-url]
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-<!-- ABOUT THE PROJECT -->
-## About The Project
+Currently, two official plugins are available:
 
-[![Product Name Screen Shot][product-screenshot]](https://kekwel.github.io/SmashThumbnailGenerator/)
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
 
-**Youtube Thumbnail Generator** for Super Smash Bros Ultimate or other plateform versus games.\
-This project is for every person who manages VoDs and want to create a thumbnail quickly !
+## React Compiler
 
-⚠️ this project won't replace a graphic designer work, but is here to help people who don't have one or can't afford one.
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-The rendered picture size is 1280 * 720, the maximum format size for YT thumbnails.
+## Expanding the ESLint configuration
 
-You can try it there : https://kekwel.github.io/SmashThumbnailGenerator/
-
-### Built With
-
-* <a href="https://vuejs.org" target="_blank"><img src="https://vuejs.org/images/logo.svg" width="32" height="32" alt="VueJS icon"> VueJS</a>
-* <a href="https://vuetifyjs.com/" target="_blank"><img src="https://cdn.vuetifyjs.com/docs/images/logos/vuetify-logo-dark.svg" width="32" height="32" alt="Vuetify icon">  Vuetify</a>
-
-<!-- GETTING STARTED -->
-## Project setup (local)
-```
-npm install
-```
-
-### Compiles and hot-reloads for development
-```
-npm run serve
-```
-
-<!-- USAGE EXAMPLES -->
-## Usage
-
-* Every components inside the canvas can be moved
-* Each tabs contains more customisation
-    * Player information
-    * Text
-    * Background color
-    * Shadow
-    * Custom Image, Position and Index
-    * Other (Export/Import layouts)
-* Multiple games choice
-    * Super Smash Bros Ultimate
-    * Super Smash Bros Melee
-    * Super Smash Bros Project +
-    * Rivals of Aether
-    * more to come !
-* Once done, get the picture with just a click on the PNG button !
-
-<!-- CONTACT -->
-## Contact
-
-Kekwel - [@Kekwel_SSB](https://twitter.com/Kekwel_SSB)
-
-<!-- MARKDOWN LINKS & IMAGES -->
-<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[contributors-shield]: https://img.shields.io/github/contributors/Kekwel/SmashThumbnailGenerator.svg?style=flat-square
-[contributors-url]: https://github.com/Kekwel/SmashThumbnailGenerator/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/Kekwel/SmashThumbnailGenerator.svg?style=flat-square
-[forks-url]: https://github.com/Kekwel/SmashThumbnailGenerator/network/members
-[stars-shield]: https://img.shields.io/github/stars/Kekwel/SmashThumbnailGenerator.svg?style=flat-square
-[stars-url]: https://github.com/Kekwel/SmashThumbnailGenerator/stargazers
-[issues-shield]: https://img.shields.io/github/issues/Kekwel/SmashThumbnailGenerator.svg?style=flat-square
-[issues-url]: https://github.com/Kekwel/SmashThumbnailGenerator/issues
-[product-screenshot]: docs/home.jpg
+If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
