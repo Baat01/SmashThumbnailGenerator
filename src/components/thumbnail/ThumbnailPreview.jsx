@@ -3,6 +3,7 @@ import useAppStore from '../../store/appStore';
 import LayoutImporter from './LayoutImporter';
 import FabricThumbnailCanvas from './FabricThumbnailCanvas';
 import { getPlayerTag } from '../../utils/characters';
+import { useTranslation } from '../../hooks/useTranslation';
 
 /**
  * ThumbnailPreview
@@ -19,6 +20,7 @@ export default function ThumbnailPreview() {
     setStep, setIsGenerating, setGeneratedCount,
     isGenerating, generatedCount,
   } = useAppStore();
+  const { t } = useTranslation();
 
   const [progress, setProgress] = useState(0);
   const canvasRef = useRef(null);
@@ -80,7 +82,7 @@ export default function ThumbnailPreview() {
       <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
         <div>
           <h2 className="text-2xl font-bold text-white">
-            Génération des <span className="gradient-text">Miniatures</span>
+            {t('preview.title1')} <span className="gradient-text">{t('preview.title2')}</span>
           </h2>
           <p className="text-[var(--color-muted)] text-sm mt-1">
             {setsToGenerate.length} miniature{setsToGenerate.length > 1 ? 's' : ''} · {selectedTournament?.name}
@@ -90,7 +92,7 @@ export default function ThumbnailPreview() {
           onClick={() => setStep(2)}
           className="text-xs px-3 py-1.5 rounded-lg border border-[var(--color-border)] text-[var(--color-muted)] hover:text-white hover:border-white/20 transition-colors"
         >
-          ← Retour aux sets
+          {t('preview.back')}
         </button>
       </div>
 
@@ -106,9 +108,9 @@ export default function ThumbnailPreview() {
           {/* Alerte si pas de template */}
           {!layoutTemplate && (
             <div className="glass p-4 border-yellow-500/30 bg-yellow-900/10">
-              <p className="text-yellow-300 text-sm font-medium mb-1">⚠️ Template requis</p>
+              <p className="text-yellow-300 text-sm font-medium mb-1">{t('preview.alertTemplateRequired')}</p>
               <p className="text-[var(--color-muted)] text-xs">
-                Configure ton layout sur{' '}
+                {t('preview.alertTemplateDesc1')}{' '}
                 <a
                   href="https://kekwel.github.io/SmashThumbnailGenerator/"
                   target="_blank"
@@ -117,7 +119,7 @@ export default function ThumbnailPreview() {
                 >
                   SmashThumbnailGenerator
                 </a>
-                , exporte-le en JSON, puis importe-le ici.
+                {t('preview.alertTemplateDesc2')}
               </p>
             </div>
           )}
@@ -125,7 +127,7 @@ export default function ThumbnailPreview() {
           {/* Liste des sets */}
           <div className="glass p-5">
             <h3 className="text-sm font-semibold text-white mb-3">
-              Sets sélectionnés ({setsToGenerate.length})
+              {t('preview.selectedSets')} ({setsToGenerate.length})
             </h3>
             <div className="flex flex-col gap-1.5 max-h-52 overflow-y-auto">
               {setsToGenerate.map(set => (
@@ -153,12 +155,12 @@ export default function ThumbnailPreview() {
                 transition-all duration-200
               "
             >
-              🚀 Générer {setsToGenerate.length} miniature{setsToGenerate.length > 1 ? 's' : ''}
+              {t('preview.generateBtn')} {setsToGenerate.length}
             </button>
           ) : (
             <div className="glass p-5 flex flex-col gap-3">
               <div className="flex justify-between text-sm text-white font-medium">
-                <span>Génération en cours…</span>
+                <span>{t('preview.generating')}</span>
                 <span>{generatedCount} / {setsToGenerate.length}</span>
               </div>
               <div className="w-full bg-[var(--color-surface-2)] rounded-full h-2">
@@ -171,7 +173,7 @@ export default function ThumbnailPreview() {
                 />
               </div>
               <p className="text-xs text-[var(--color-muted)] text-center">
-                Les PNG se téléchargent automatiquement…
+                {t('preview.downloading')}
               </p>
             </div>
           )}
@@ -181,7 +183,7 @@ export default function ThumbnailPreview() {
             <div className="glass p-4 text-center border-green-500/30 bg-green-900/10">
               <div className="text-2xl mb-1">✅</div>
               <p className="text-green-400 font-semibold text-sm">
-                {generatedCount} miniature{generatedCount > 1 ? 's' : ''} générée{generatedCount > 1 ? 's' : ''} !
+                {t('preview.successTitle')}
               </p>
             </div>
           )}
@@ -191,9 +193,9 @@ export default function ThumbnailPreview() {
         <div className="lg:col-span-2">
           <div className="glass p-4">
             <p className="text-xs text-[var(--color-muted)] uppercase tracking-wider mb-3 font-medium">
-              Aperçu — {previewSet
+              {t('preview.previewLabel')} {previewSet
                 ? `${getPlayerTag(previewSet.slots?.[0]?.entrant)} vs ${getPlayerTag(previewSet.slots?.[1]?.entrant)}`
-                : 'Aucun set sélectionné'
+                : t('preview.noSetSelected')
               }
             </p>
 
@@ -211,12 +213,12 @@ export default function ThumbnailPreview() {
                 {!layoutTemplate ? (
                   <>
                     <span className="text-4xl">📄</span>
-                    <p className="text-sm">Importe un template JSON pour voir l'aperçu</p>
+                    <p className="text-sm">{t('preview.importTemplateMsg')}</p>
                   </>
                 ) : (
                   <>
                     <span className="text-4xl">⚔️</span>
-                    <p className="text-sm">Aucun set sélectionné</p>
+                    <p className="text-sm">{t('preview.noSetSelected')}</p>
                   </>
                 )}
               </div>
@@ -226,18 +228,18 @@ export default function ThumbnailPreview() {
           {/* Info sur le workflow */}
           {!layoutTemplate && (
             <div className="glass p-4 mt-4">
-              <h4 className="text-sm font-semibold text-white mb-2">Comment ça marche ?</h4>
+              <h4 className="text-sm font-semibold text-white mb-2">{t('preview.howItWorks')}</h4>
               <ol className="text-xs text-[var(--color-muted)] space-y-2 list-decimal list-inside">
                 <li>
-                  Va sur{' '}
+                  {t('preview.how1')}{' '}
                   <a href="https://kekwel.github.io/SmashThumbnailGenerator/" target="_blank" rel="noopener noreferrer" className="text-[var(--color-accent)] hover:underline">
-                    SmashThumbnailGenerator
+                    {t('preview.how1_link')}
                   </a>{' '}
-                  et configure ton layout (couleurs, personnages par défaut, police…)
+                  {t('preview.how1_rest')}
                 </li>
-                <li>Clique sur <strong className="text-white">Exporter → JSON</strong> pour télécharger le template</li>
-                <li>Importe ce fichier JSON ici via le bouton ci-dessus</li>
-                <li>Les noms de joueurs et la phase du set seront injectés automatiquement dans le template</li>
+                <li>{t('preview.how2')} <strong className="text-white">{t('preview.how2_btn')}</strong> {t('preview.how2_rest')}</li>
+                <li>{t('preview.how3')}</li>
+                <li>{t('preview.how4')}</li>
               </ol>
             </div>
           )}

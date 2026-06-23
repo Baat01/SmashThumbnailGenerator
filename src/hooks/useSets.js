@@ -33,9 +33,9 @@ export function useSets() {
       }
     } catch (err) {
       const msg = err?.response?.errors?.map(e => e.message).join(', ')
-        ?? err?.message ?? 'Erreur inconnue';
+        ?? err?.message ?? 'Unknown error';
       console.error('[useSets] loadEvents error:', err);
-      throw new Error(`Impossible de charger les events : ${msg}`);
+      throw new Error(msg);
     } finally {
       setSetsLoading(false);
     }

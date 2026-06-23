@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import useAppStore from '../../store/appStore';
 import { useSets } from '../../hooks/useSets';
+import { useTranslation } from '../../hooks/useTranslation';
 
-function formatDate(ts) {
+function formatDate(ts, lang) {
   if (!ts) return '';
-  return new Date(ts * 1000).toLocaleDateString('fr-FR', {
+  return new Date(ts * 1000).toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'en-US', {
     day: '2-digit', month: 'long', year: 'numeric'
   });
 }
@@ -11,11 +13,18 @@ function formatDate(ts) {
 export default function TournamentPicker() {
   const { tournaments, selectedTournament, selectTournament, setStep, logout, user } = useAppStore();
   const { loadEvents, eventsLoading, events } = useSets();
+  const { t, language } = useTranslation();
+  const [error, setError] = useState(null);
 
   async function handleSelect(tournament) {
+    setError(null);
     selectTournament(tournament);
-    await loadEvents(tournament);
-    setStep(2); // Passe à l'étape Sets/Events
+    try {
+      await loadEvents(tournament);
+      setStep(2); // Passe à l'étape Sets/Events
+    } catch (err) {
+      setError(err.message);
+    }
   }
 
   return (
@@ -23,12 +32,12 @@ export default function TournamentPicker() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h2 className="text-2xl font-bold text-white">
-            Tes Tournois <span className="gradient-text">Start.gg</span>
+            {t('tournament.title').split(' ')[0]} <span className="gradient-text">{t('tournament.title').split(' ').slice(1).join(' ')}</span>
           </h2>
           {user && (
             <p className="text-[var(--color-muted)] text-sm mt-1">
-              Connecté en tant que <strong className="text-white">{user.name}</strong>
-              {' · '}{tournaments.length} tournoi{tournaments.length > 1 ? 's' : ''} trouvé{tournaments.length > 1 ? 's' : ''}
+              {t('tournament.loggedInAs')} <strong className="text-white">{user.name}</strong>
+              {' · '}{tournaments.length} {tournaments.length > 1 ? 'tournaments' : 'tournament'}
             </p>
           )}
         </div>
@@ -36,27 +45,34 @@ export default function TournamentPicker() {
           onClick={logout}
           className="text-xs text-[var(--color-muted)] hover:text-white transition-colors border border-[var(--color-border)] px-3 py-1.5 rounded-lg hover:border-white/20"
         >
-          ← Déconnexion
+          {t('tournament.logout')}
         </button>
       </div>
+
+      {error && (
+        <div className="bg-red-900/30 border border-red-500/50 rounded-lg px-4 py-3 text-red-300 text-sm mb-6">
+          <div className="font-semibold">{t('error.loading')}</div>
+          <div className="opacity-80 text-xs mt-1 font-mono">{error}</div>
+        </div>
+      )}
 
       {tournaments.length === 0 ? (
         <div className="glass p-12 text-center text-[var(--color-muted)]">
           <div className="text-4xl mb-3">🏜️</div>
-          <p>Aucun tournoi trouvé sur ce compte.</p>
+          <p>{t('tournament.noTournaments')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {tournaments.map(t => {
-            const logo = t.images?.find(img => img.type === 'profile')?.url ?? t.images?.[0]?.url ?? null;
-            const isSelected = selectedTournament?.id === t.id;
+          {tournaments.map(tData => {
+            const logo = tData.images?.find(img => img.type === 'profile')?.url ?? tData.images?.[0]?.url ?? null;
+            const isSelected = selectedTournament?.id === tData.id;
             const isLoading  = isSelected && eventsLoading;
 
             return (
               <button
-                key={t.id}
-                id={`tournament-${t.id}`}
-                onClick={() => handleSelect(t)}
+                key={tData.id}
+                id={`tournament-${tData.id}`}
+                onClick={() => handleSelect(tData)}
                 disabled={eventsLoading}
                 className={`
                   glass text-left p-4 flex gap-4 items-start cursor-pointer
@@ -68,18 +84,18 @@ export default function TournamentPicker() {
               >
                 <div className="w-14 h-14 rounded-lg overflow-hidden shrink-0 bg-[var(--color-surface-2)] flex items-center justify-center">
                   {logo
-                    ? <img src={logo} alt={t.name} className="w-full h-full object-cover" />
+                    ? <img src={logo} alt={tData.name} className="w-full h-full object-cover" />
                     : <span className="text-2xl">🏆</span>
                   }
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-white text-sm leading-tight group-hover:text-[var(--color-accent)] transition-colors line-clamp-2">
-                    {t.name}
+                    {tData.name}
                   </h3>
-                  <p className="text-[var(--color-muted)] text-xs mt-1">{formatDate(t.startAt)}</p>
-                  {t.numAttendees && (
+                  <p className="text-[var(--color-muted)] text-xs mt-1">{formatDate(tData.startAt, language)}</p>
+                  {tData.numAttendees && (
                     <span className="inline-block mt-2 text-xs px-2 py-0.5 rounded-full bg-[var(--color-surface-2)] text-[var(--color-muted)]">
-                      👥 {t.numAttendees} participants
+                      👥 {tData.numAttendees}
                     </span>
                   )}
                 </div>

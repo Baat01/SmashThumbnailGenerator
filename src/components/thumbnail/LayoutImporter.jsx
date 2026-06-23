@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import useAppStore from '../../store/appStore';
+import { useTranslation } from '../../hooks/useTranslation';
 
 // ─── Polices disponibles (avec chargement Google Fonts si nécessaire) ─────────
 const FONTS = [
@@ -51,6 +52,7 @@ export default function LayoutImporter() {
     selectedFontSize, setSelectedFontSize,
     selectedFontColor, setSelectedFontColor,
   } = useAppStore();
+  const { t } = useTranslation();
   const inputRef = useRef(null);
 
   // ── Lecture du fichier ─────────────────────────────────────────────────────
@@ -61,7 +63,7 @@ export default function LayoutImporter() {
     const isTxt  = file.name.endsWith('.txt')  || file.type === 'text/plain';
 
     if (!isJson && !isTxt) {
-      alert('Seuls les fichiers .json ou .txt (exportés par SmashThumbnailGenerator) sont acceptés.');
+      alert(t('layout.errorOnlyJson'));
       return;
     }
 
@@ -70,13 +72,13 @@ export default function LayoutImporter() {
       const template = JSON.parse(text);
 
       if (!template.j1 || !template.j2) {
-        alert('Ce fichier ne semble pas être un template SmashThumbnailGenerator valide (j1 / j2 manquants).');
+        alert(t('layout.errorInvalid'));
         return;
       }
 
       setLayoutTemplate(template, file.name);
     } catch (e) {
-      alert(`Impossible de lire le fichier : ${e.message}`);
+      alert(`${t('layout.errorRead')} ${e.message}`);
     }
   }
 
@@ -100,7 +102,7 @@ export default function LayoutImporter() {
   const fontPicker = (
     <div className="mt-4">
       <label className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wider block mb-1.5">
-        Police du texte
+        {t('layout.fontTitle')}
       </label>
       <select
         id="font-picker"
@@ -121,14 +123,14 @@ export default function LayoutImporter() {
       </select>
       {selectedFont && (
         <p className="text-xs text-[var(--color-muted)] mt-1">
-          La police <strong className="text-white">{selectedFont}</strong> remplace celle du template.
+          {t('layout.fontOverrideMsg1')} <strong className="text-white">{selectedFont}</strong> {t('layout.fontOverrideMsg2')}
         </p>
       )}
 
       {/* Taille de police */}
       <div className="mt-4">
         <label className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wider block mb-1.5">
-          Taille du texte (Optionnel)
+          {t('layout.fontSizeTitle')}
         </label>
         <input
           type="number"
@@ -147,7 +149,7 @@ export default function LayoutImporter() {
       {/* Couleur du texte */}
       <div className="mt-4">
         <label className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wider block mb-1.5">
-          Couleur du texte (Optionnel)
+          {t('layout.fontColorTitle')}
         </label>
         <div className="flex gap-2">
           <input
@@ -173,7 +175,7 @@ export default function LayoutImporter() {
           className="text-xs text-[var(--color-muted)] hover:text-white mt-1 underline"
           onClick={() => setSelectedFontColor('')}
         >
-          Réinitialiser la couleur
+          {t('layout.resetColor')}
         </button>
       </div>
     </div>
@@ -187,7 +189,7 @@ export default function LayoutImporter() {
     return (
       <div className="w-full">
         <p className="text-xs font-medium text-[var(--color-muted)] mb-2 uppercase tracking-wider">
-          Template chargé
+          {t('layout.loaded')}
         </p>
         <div className="glass p-3 flex items-center gap-3">
           {/* Mini aperçu des couleurs */}
@@ -216,8 +218,8 @@ export default function LayoutImporter() {
           <button
             onClick={clearLayoutTemplate}
             className="shrink-0 text-[var(--color-muted)] hover:text-red-400 transition-colors text-lg leading-none"
-            aria-label="Supprimer le template"
-            title="Supprimer le template"
+            aria-label={t('layout.delete')}
+            title={t('layout.delete')}
           >
             ✕
           </button>
@@ -232,7 +234,7 @@ export default function LayoutImporter() {
   return (
     <div className="w-full">
       <p className="text-xs font-medium text-[var(--color-muted)] mb-2 uppercase tracking-wider">
-        Template de miniature
+        {t('layout.title')}
       </p>
       <div
         id="layout-drop-zone"
@@ -247,9 +249,9 @@ export default function LayoutImporter() {
         "
       >
         <span className="text-3xl">📄</span>
-        <p className="text-white text-sm font-medium">Importer un template</p>
+        <p className="text-white text-sm font-medium">{t('layout.dropzone')}</p>
         <p className="text-[var(--color-muted)] text-xs leading-relaxed">
-          Depuis{' '}
+          {t('layout.dropzoneDesc1')}{' '}
           <a
             href="https://kekwel.github.io/SmashThumbnailGenerator/"
             target="_blank"
@@ -259,9 +261,9 @@ export default function LayoutImporter() {
           >
             SmashThumbnailGenerator
           </a>
-          , exporte en texte et glisse le fichier{' '}
-          <code className="bg-white/10 px-1 rounded">.json</code> ou{' '}
-          <code className="bg-white/10 px-1 rounded">.txt</code> ici.
+          {t('layout.dropzoneDesc2')}{' '}
+          <code className="bg-white/10 px-1 rounded">.json</code> {t('layout.dropzoneDesc3')}{' '}
+          <code className="bg-white/10 px-1 rounded">.txt</code> {t('layout.dropzoneDesc4')}
         </p>
       </div>
 

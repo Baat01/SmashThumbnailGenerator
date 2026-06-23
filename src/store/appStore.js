@@ -10,6 +10,13 @@ const useAppStore = create((set, get) => ({
   currentStep: 0, // 0=Auth, 1=Tournoi, 2=Sets, 3=Génération
   setStep: (step) => set({ currentStep: step }),
 
+  // ── Language ─────────────────────────────────────────────────────
+  language: localStorage.getItem('app_language') || 'fr',
+  setLanguage: (lang) => {
+    localStorage.setItem('app_language', lang);
+    set({ language: lang });
+  },
+
   // ── Auth ─────────────────────────────────────────────────────────
   apiKey: localStorage.getItem('startgg_api_key') || '',
   user: null,

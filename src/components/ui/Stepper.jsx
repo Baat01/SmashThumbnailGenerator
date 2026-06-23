@@ -1,18 +1,22 @@
+import { useTranslation } from '../../hooks/useTranslation';
+
 /**
  * Stepper — Indicateur d'étapes horizontal.
  * 4 étapes : Auth → Tournoi → Sets → Génération
  */
-const STEPS = [
-  { label: 'Clé API',     icon: '🔑' },
-  { label: 'Tournoi',     icon: '🏆' },
-  { label: 'Sets',        icon: '⚔️' },
-  { label: 'Génération',  icon: '🎨' },
+const STEPS_CONFIG = [
+  { key: 'step.apiKey',     icon: '🔑' },
+  { key: 'step.tournament', icon: '🏆' },
+  { key: 'step.sets',       icon: '⚔️' },
+  { key: 'step.generation', icon: '🎨' },
 ];
 
 export default function Stepper({ currentStep }) {
+  const { t } = useTranslation();
+
   return (
     <div className="flex items-center justify-center gap-0 mb-10 px-4">
-      {STEPS.map((step, index) => {
+      {STEPS_CONFIG.map((step, index) => {
         const isCompleted = index < currentStep;
         const isActive    = index === currentStep;
         const isUpcoming  = index > currentStep;
@@ -39,7 +43,7 @@ export default function Stepper({ currentStep }) {
                 className={`text-xs font-medium whitespace-nowrap transition-colors duration-300
                   ${isActive ? 'text-[var(--color-accent)]' : isCompleted ? 'text-white' : 'text-[var(--color-muted)]'}`}
               >
-                {step.label}
+                {t(step.key)}
               </span>
             </div>
 

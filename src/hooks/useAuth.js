@@ -23,8 +23,8 @@ export function useAuth() {
     } catch (err) {
       const msg = err?.response?.errors?.[0]?.message
         || err?.message
-        || 'Erreur inconnue';
-      setError(`Authentification échouée : ${msg}`);
+        || 'Unknown error';
+      setError(msg);
     } finally {
       setLoading(false);
     }

@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
+import { useTranslation } from '../../hooks/useTranslation';
 
 export default function ApiKeyForm() {
   const { login, loading, error } = useAuth();
+  const { t } = useTranslation();
   const [value, setValue] = useState('');
   const [showKey, setShowKey] = useState(false);
 
@@ -18,19 +20,20 @@ export default function ApiKeyForm() {
       <div className="text-center mb-10">
         <div className="text-6xl mb-4">🎮</div>
         <h1 className="text-4xl font-bold mb-3 gradient-text">
-          Smash Thumbnail Generator
+          {t('app.title')}
         </h1>
         <p className="text-[var(--color-muted)] text-lg max-w-md">
-          Génère automatiquement des miniatures pour tes sets de tournoi,
-          connecté à l'API <strong className="text-white">Start.gg</strong>.
+          {t('auth.description1')}
+          <strong className="text-white">Start.gg</strong>
+          {t('auth.description2')}
         </p>
       </div>
 
       {/* Card */}
       <div className="glass p-8 w-full max-w-md glow-accent transition-all duration-300">
-        <h2 className="text-xl font-semibold mb-1 text-white">Connexion</h2>
+        <h2 className="text-xl font-semibold mb-1 text-white">{t('auth.submit')}</h2>
         <p className="text-[var(--color-muted)] text-sm mb-6">
-          Obtiens ta clé sur{' '}
+          {t('auth.helpTitle')}{' '}
           <a
             href="https://developer.start.gg/docs/authentication"
             target="_blank"
@@ -45,7 +48,7 @@ export default function ApiKeyForm() {
           {/* Input clé API */}
           <div className="relative">
             <label className="block text-xs font-medium text-[var(--color-muted)] mb-2 uppercase tracking-wider">
-              Clé API Start.gg
+              {t('auth.label')}
             </label>
             <div className="relative flex items-center">
               <input
@@ -53,7 +56,7 @@ export default function ApiKeyForm() {
                 type={showKey ? 'text' : 'password'}
                 value={value}
                 onChange={e => setValue(e.target.value)}
-                placeholder="eyJ0eXAiOiJKV1Qi..."
+                placeholder={t('auth.placeholder')}
                 autoComplete="off"
                 className="
                   w-full bg-[var(--color-surface-2)] border border-[var(--color-border)]
@@ -67,7 +70,6 @@ export default function ApiKeyForm() {
                 type="button"
                 onClick={() => setShowKey(!showKey)}
                 className="absolute right-3 text-[var(--color-muted)] hover:text-white transition-colors"
-                aria-label={showKey ? 'Masquer la clé' : 'Afficher la clé'}
               >
                 {showKey ? '🙈' : '👁️'}
               </button>
@@ -77,7 +79,8 @@ export default function ApiKeyForm() {
           {/* Erreur */}
           {error && (
             <div className="bg-red-900/30 border border-red-500/50 rounded-lg px-4 py-3 text-red-300 text-sm">
-              {error}
+              <div className="font-semibold">{t('auth.error')}</div>
+              <div className="opacity-80 text-xs mt-1 font-mono">{error}</div>
             </div>
           )}
 
@@ -97,13 +100,13 @@ export default function ApiKeyForm() {
             {loading ? (
               <>
                 <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                 </svg>
-                Connexion en cours…
+                {t('auth.loading')}
               </>
             ) : (
-              '🚀 Se connecter'
+              `🚀 ${t('auth.submit')}`
             )}
           </button>
         </form>
@@ -111,7 +114,7 @@ export default function ApiKeyForm() {
 
       {/* Footer info */}
       <p className="text-[var(--color-muted)] text-xs mt-6 text-center">
-        Ta clé est stockée localement dans ton navigateur. Elle n'est jamais transmise à nos serveurs.
+        {t('auth.storageInfo')}
       </p>
     </div>
   );

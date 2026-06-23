@@ -1,6 +1,7 @@
 import useAppStore from '../../store/appStore';
 import SetCard from './SetCard';
 import EventPicker from '../tournament/EventPicker';
+import { useTranslation } from '../../hooks/useTranslation';
 
 export default function SetList() {
   const {
@@ -9,6 +10,7 @@ export default function SetList() {
     selectAllSets, clearSetSelection,
     selectedTournament, setStep
   } = useAppStore();
+  const { t } = useTranslation();
 
   // ── Skeleton de chargement ─────────────────────────────────────────────────
   if (setsLoading) {
@@ -17,7 +19,7 @@ export default function SetList() {
         <div className="flex items-center gap-3 mb-6">
           <div className="skeleton h-8 w-64 rounded" />
         </div>
-        <p className="text-[var(--color-muted)] text-sm mb-4">Chargement des sets…</p>
+        <p className="text-[var(--color-muted)] text-sm mb-4">{t('sets.loading')}</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 9 }).map((_, i) => (
             <div key={i} className="skeleton h-36 rounded-xl" />
@@ -38,11 +40,11 @@ export default function SetList() {
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
           <h2 className="text-2xl font-bold text-white">
-            Sets de{' '}
+            {t('sets.setsOf')}{' '}
             <span className="gradient-text truncate">{selectedTournament?.name}</span>
           </h2>
           <p className="text-[var(--color-muted)] text-sm mt-1">
-            {sets.length} sets complétés · {selectedSets.length} sélectionné{selectedSets.length > 1 ? 's' : ''}
+            {sets.length} {t('sets.completed')} · {selectedSets.length} {selectedSets.length > 1 ? t('sets.selectedPlural') : t('sets.selected')}
           </p>
         </div>
 
@@ -51,13 +53,13 @@ export default function SetList() {
             onClick={selectAllSets}
             className="text-xs px-3 py-1.5 rounded-lg border border-[var(--color-border)] text-[var(--color-muted)] hover:text-white hover:border-white/20 transition-colors"
           >
-            Tout sélectionner
+            {t('sets.selectAll')}
           </button>
           <button
             onClick={clearSetSelection}
             className="text-xs px-3 py-1.5 rounded-lg border border-[var(--color-border)] text-[var(--color-muted)] hover:text-white hover:border-white/20 transition-colors"
           >
-            Tout désélectionner
+            {t('sets.clearAll')}
           </button>
           <button
             onClick={() => setStep(3)}
@@ -69,7 +71,7 @@ export default function SetList() {
               hover:opacity-90 active:scale-95 transition-all duration-200
             "
           >
-            Générer {selectedSets.length > 0 ? `(${selectedSets.length})` : ''} →
+            {t('sets.generateBtn')} {selectedSets.length > 0 ? `(${selectedSets.length})` : ''} →
           </button>
         </div>
       </div>
@@ -77,13 +79,13 @@ export default function SetList() {
       {sets.length === 0 ? (
         <div className="glass p-12 text-center text-[var(--color-muted)]">
           <div className="text-4xl mb-3">📭</div>
-          <p className="text-white font-medium mb-2">Aucun set terminé trouvé</p>
+          <p className="text-white font-medium mb-2">{t('sets.noSetsTitle')}</p>
           <ul className="list-disc list-inside text-sm text-left inline-block mt-2 space-y-1">
-            <li>Les résultats sont bien saisis dans Start.gg ?</li>
-            <li>L'event est bien finalisé (pas "en cours") ?</li>
+            <li>{t('sets.noSetsHint1')}</li>
+            <li>{t('sets.noSetsHint2')}</li>
           </ul>
           <p className="mt-3 text-xs text-[var(--color-accent)]">
-            💡 F12 → Console pour voir les logs détaillés de l'API.
+            {t('sets.consoleHint')}
           </p>
         </div>
       ) : (

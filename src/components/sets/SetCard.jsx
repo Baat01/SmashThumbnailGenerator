@@ -1,6 +1,7 @@
 import useAppStore from '../../store/appStore';
 import { getPlayerTag, CHARACTER_MAP } from '../../utils/characters';
 import CharacterPicker from './CharacterPicker';
+import { useTranslation } from '../../hooks/useTranslation';
 
 /**
  * Carte représentant un set complété.
@@ -9,6 +10,7 @@ import CharacterPicker from './CharacterPicker';
  */
 export default function SetCard({ set }) {
   const { selectedSets, toggleSetSelection, characterOverrides, setCharacterOverride } = useAppStore();
+  const { t } = useTranslation();
   const isSelected = selectedSets.includes(set.id);
 
   const slot1 = set.slots?.[0];
@@ -57,7 +59,7 @@ export default function SetCard({ set }) {
       {/* Header : phase + checkbox */}
       <div className="flex items-center justify-between mb-3">
         <span className="text-xs font-semibold px-2 py-1 rounded-full bg-[var(--color-surface-2)] text-[var(--color-accent)]">
-          {set.fullRoundText ?? `Round ${set.round}`}
+          {set.fullRoundText ?? `${t('sets.round')} ${set.round}`}
         </span>
         <div className={`
           w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-200
@@ -76,20 +78,20 @@ export default function SetCard({ set }) {
         <div className={`flex-1 text-center ${isWinner1 ? 'text-[var(--color-winner)]' : 'text-[var(--color-loser)]'}`}>
           <div className="font-bold text-sm truncate">{p1Tag}</div>
           {char1 && <div className="text-xs text-[var(--color-muted)] mt-0.5">{char1.name}</div>}
-          {isWinner1 && <div className="text-[10px] font-semibold text-[var(--color-winner)] mt-0.5">WINNER</div>}
+          {isWinner1 && <div className="text-[10px] font-semibold text-[var(--color-winner)] mt-0.5">{t('sets.winner')}</div>}
         </div>
 
         {/* Score */}
         <div className="flex flex-col items-center shrink-0">
           <div className="text-white font-bold text-lg">{score1} – {score2}</div>
-          <div className="text-[var(--color-muted)] text-[10px] font-bold uppercase tracking-wider">VS</div>
+          <div className="text-[var(--color-muted)] text-[10px] font-bold uppercase tracking-wider">{t('sets.vs')}</div>
         </div>
 
         {/* Joueur 2 */}
         <div className={`flex-1 text-center ${isWinner2 ? 'text-[var(--color-winner)]' : 'text-[var(--color-loser)]'}`}>
           <div className="font-bold text-sm truncate">{p2Tag}</div>
           {char2 && <div className="text-xs text-[var(--color-muted)] mt-0.5">{char2.name}</div>}
-          {isWinner2 && <div className="text-[10px] font-semibold text-[var(--color-winner)] mt-0.5">WINNER</div>}
+          {isWinner2 && <div className="text-[10px] font-semibold text-[var(--color-winner)] mt-0.5">{t('sets.winner')}</div>}
         </div>
       </div>
 
@@ -100,7 +102,7 @@ export default function SetCard({ set }) {
           onClick={e => e.stopPropagation()} // Empêche le toggle de sélection
         >
           <p className="text-[10px] text-[var(--color-muted)] text-center uppercase tracking-wider">
-            ⚠️ Personnages non reportés — sélection manuelle
+            {t('sets.manualSelection')}
           </p>
           <div className="flex gap-2">
             {needsChar1 && (

@@ -1,10 +1,13 @@
 import { CHARACTERS } from '../../utils/characters';
+import { useTranslation } from '../../hooks/useTranslation';
 
 /**
  * Menu déroulant de sélection de personnage (fallback manuel).
  * Affiché quand l'API Start.gg ne remonte pas les sélections.
  */
 export default function CharacterPicker({ value, onChange, label, id }) {
+  const { t } = useTranslation();
+
   return (
     <div className="flex flex-col gap-1">
       {label && (
@@ -24,7 +27,7 @@ export default function CharacterPicker({ value, onChange, label, id }) {
           appearance-none
         "
       >
-        <option value="">— Choisir un perso —</option>
+        <option value="">{t('sets.chooseChar')}</option>
         {CHARACTERS.map(char => (
           <option key={char.id} value={char.id}>
             {char.name}
