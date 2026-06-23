@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { defaultTemplate } from '../utils/defaultTemplate';
 
 /**
  * Store global Zustand.
@@ -66,10 +67,10 @@ const useAppStore = create((set, get) => ({
   },
 
   // ── Layout template (JSON exporté par SmashThumbnailGenerator) ──────────
-  layoutTemplate: null,
-  layoutTemplateName: '',
+  layoutTemplate: defaultTemplate,
+  layoutTemplateName: 'Default Template',
   setLayoutTemplate: (template, name) => set({ layoutTemplate: template, layoutTemplateName: name }),
-  clearLayoutTemplate: () => set({ layoutTemplate: null, layoutTemplateName: '' }),
+  clearLayoutTemplate: () => set({ layoutTemplate: defaultTemplate, layoutTemplateName: 'Default Template' }),
 
   // ── Global Customizations ─────────────────────────────────────────
   selectedFont: '',
