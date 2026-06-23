@@ -19,9 +19,8 @@ Pour récupérer les données de vos tournois, l'application a besoin d'une clé
 *(Note : Votre clé est sauvegardée localement dans votre navigateur pour vos prochaines visites).*
 
 ### Étape 2 : Sélection du Tournoi
-1. Entrez l'URL du tournoi start.gg (ex: `https://start.gg/tournament/mon-super-tournoi/details`) ou simplement le "slug" du tournoi (ex: `mon-super-tournoi`).
-2. Cliquez sur "Rechercher". L'application va récupérer les informations.
-3. Une fois le tournoi trouvé, sélectionnez l'événement spécifique (ex: "Super Smash Bros. Ultimate Singles") pour lequel vous souhaitez générer les miniatures.
+1. L'application affichera la liste des tournois dont vous pouvez exporter les sets.
+2. Une fois le tournoi trouvé, sélectionnez l'événement spécifique (ex: "Super Smash Bros. Ultimate Singles") pour lequel vous souhaitez générer les miniatures.
 
 ### Étape 3 : Sélection des Sets (Matchs)
 1. L'application affichera la liste des matchs (Sets) complétés ou en cours pour l'événement sélectionné.
@@ -35,6 +34,7 @@ L'application utilise un template par défaut pour placer les personnages, les p
 
 - **Prévisualisation** : Vous pouvez voir le rendu en direct sur le canvas.
 - **Export** : Cliquez sur le bouton d'export pour générer et télécharger l'image ou les images finales (sous forme d'archive si vous avez sélectionné plusieurs matchs).
+- **Copier les titres youtube** : Cliquez sur le bouton pour copier des titres pour les vidéos youtube correspondant à toutes les sets correspondants.
 
 ---
 
