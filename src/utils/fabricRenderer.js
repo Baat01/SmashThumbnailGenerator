@@ -12,6 +12,11 @@
  *   → Les enfants sont déjà en coordonnées canvas absolues.
  *   → Le groupe est positionné à (text.x, text.y) avec originX:'left', originY:'top' (défaut Fabric).
  *   → PAS de originX:'center'.
+ *
+ * Z-Order :
+ *   Chaque élément du JSON a un champ `index` qui correspond à sa position dans la pile Fabric.
+ *   Après ajout au canvas, on appelle canvas.moveTo(objet, index) pour respecter cet ordre.
+ *   Les fonds (bg) sans index sont envoyés en arrière avec sendToBack.
  */
 
 import { fabric } from 'fabric';
@@ -66,6 +71,7 @@ function makeGradient(colors, width, height, direction) {
 /**
  * Dessine le fond gradient d'un joueur (j1.bg ou j2.bg).
  * bg = { width, height, x, y, gradient:{colors}, colorDirection? }
+ * Les fonds n'ont pas d'index dans le JSON original — ils sont envoyés en arrière.
  */
 export function drawBackground(canvas, bg) {
   const fill = makeGradient(bg.gradient.colors, bg.width, bg.height, bg.colorDirection);
@@ -81,6 +87,7 @@ export function drawBackground(canvas, bg) {
     originY: 'top',
   });
   canvas.add(rect);
+  canvas.sendToBack(rect);
   return rect;
 }
 
@@ -88,14 +95,47 @@ export function drawBackground(canvas, bg) {
 
 /**
  * Charge et dessine une image de personnage (j1.characters ou j2.characters).
- * Essai direct d'abord, puis via proxy CORS si l'image ne charge pas.
+ * Applique le z-order via canvas.moveTo(img, zIndex) si fourni.
  */
-export function drawCharacter(canvas, charData, overrideUrl = null) {
+export function drawCharacter(canvas, charData, overrideUrl = null, zIndex = null) {
   return new Promise((resolve) => {
     const rawUrl = overrideUrl || charData?.url;
     if (!rawUrl) { resolve(null); return; }
 
     const { x, y, width, height, flipX, angle, scale, shadow } = charData;
+
+    const applyAndAdd = (img) => {
+      const origW = img.getOriginalSize?.()?.width  ?? img.width;
+      const origH = img.getOriginalSize?.()?.height ?? img.height;
+
+      img.set({
+        left:    x  ?? 0,
+        top:     y  ?? 0,
+        scaleX:  ((width  ?? origW) / origW) * (scale?.x ?? 1),
+        scaleY:  ((height ?? origH) / origH) * (scale?.y ?? 1),
+        flipX:   flipX ?? false,
+        angle:   angle ?? 0,
+        selectable: false,
+        evented:    false,
+        originX: 'left',
+        originY: 'top',
+      });
+
+      if (shadow?.active) {
+        img.set('shadow', new fabric.Shadow({
+          color:   shadow.color   ?? '#000000',
+          blur:    shadow.blur    ?? 10,
+          offsetX: shadow.x       ?? 5,
+          offsetY: shadow.y       ?? 5,
+        }));
+      }
+
+      canvas.add(img);
+      if (zIndex !== null && zIndex !== undefined) {
+        canvas.moveTo(img, zIndex);
+      }
+      resolve(img);
+    };
 
     const tryLoad = (url, fallback) => {
       fabric.Image.fromURL(
@@ -106,34 +146,7 @@ export function drawCharacter(canvas, charData, overrideUrl = null) {
             else resolve(null);
             return;
           }
-
-          const origW = img.getOriginalSize?.()?.width  ?? img.width;
-          const origH = img.getOriginalSize?.()?.height ?? img.height;
-
-          img.set({
-            left:    x  ?? 0,
-            top:     y  ?? 0,
-            scaleX:  ((width  ?? origW) / origW) * (scale?.x ?? 1),
-            scaleY:  ((height ?? origH) / origH) * (scale?.y ?? 1),
-            flipX:   flipX ?? false,
-            angle:   angle ?? 0,
-            selectable: false,
-            evented:    false,
-            originX: 'left',
-            originY: 'top',
-          });
-
-          if (shadow?.active) {
-            img.set('shadow', new fabric.Shadow({
-              color:   shadow.color   ?? '#000000',
-              blur:    shadow.blur    ?? 10,
-              offsetX: shadow.x       ?? 5,
-              offsetY: shadow.y       ?? 5,
-            }));
-          }
-
-          canvas.add(img);
-          resolve(img);
+          applyAndAdd(img);
         },
         { crossOrigin: 'anonymous' }
       );
@@ -160,7 +173,7 @@ export function drawCharacter(canvas, charData, overrideUrl = null) {
 // du groupe des coordonnées des enfants pour les stocker en coordonnées locales.
 // Résultat : le groupe tourne autour de son coin supérieur gauche (text.x, text.y).
 
-export function drawTag(canvas, tagData, textOverride = null, fontOverride = null, sizeOverride = null, colorOverride = null) {
+export function drawTag(canvas, tagData, textOverride = null, fontOverride = null, sizeOverride = null, colorOverride = null, zIndex = null) {
   if (!tagData) return null;
   const { angle, text, bg } = tagData;
   const displayText = textOverride !== null ? textOverride : (text?.value ?? '');
@@ -237,14 +250,17 @@ export function drawTag(canvas, tagData, textOverride = null, fontOverride = nul
   });
 
   canvas.add(group);
+  if (zIndex !== null && zIndex !== undefined) {
+    canvas.moveTo(group, zIndex);
+  }
   return group;
 }
 
 // ─── Texte VS ──────────────────────────────────────────────────────────────────
 
-export function drawVS(canvas, vsData, fontOverride = null, sizeOverride = null, colorOverride = null) {
+export function drawVS(canvas, vsData, fontOverride = null, sizeOverride = null, colorOverride = null, zIndex = null) {
   if (!vsData?.text) return null;
-  const { text, shadow, scale, width, height, angle } = vsData;
+  const { text, shadow, scale, angle } = vsData;
 
   const vsText = new fabric.Text(text.value ?? 'VS', {
     left:       text.x ?? 640,
@@ -273,11 +289,19 @@ export function drawVS(canvas, vsData, fontOverride = null, sizeOverride = null,
   }
 
   canvas.add(vsText);
+  if (zIndex !== null && zIndex !== undefined) {
+    canvas.moveTo(vsText, zIndex);
+  }
   return vsText;
 }
 
 // ─── Images additionnelles ─────────────────────────────────────────────────────
 
+/**
+ * Charge et dessine les images additionnelles (logos, overlays, etc.).
+ * Gère les URLs HTTP et les données base64 (data:image/...).
+ * Respecte le z-order via l'index de chaque image.
+ */
 export async function drawExtraImages(canvas, images = []) {
   for (const imgData of images) {
     if (!imgData?.url) continue;
@@ -286,20 +310,42 @@ export async function drawExtraImages(canvas, images = []) {
         imgData.url,
         (img) => {
           if (!img || img.width === 0) { resolve(); return; }
+
+          const origW = img.getOriginalSize?.()?.width  ?? img.width;
+          const origH = img.getOriginalSize?.()?.height ?? img.height;
+
+          // Calcul du scale : si width/height sont fournis, on s'en sert,
+          // sinon on tombe sur scaleX/scaleY directs.
+          let scaleX = imgData.scaleX ?? 1;
+          let scaleY = imgData.scaleY ?? 1;
+          if (imgData.width && origW) scaleX = imgData.width / origW * (imgData.scale?.x ?? 1);
+          if (imgData.height && origH) scaleY = imgData.height / origH * (imgData.scale?.y ?? 1);
+
           img.set({
             left:    imgData.x       ?? 0,
             top:     imgData.y       ?? 0,
-            scaleX:  imgData.scaleX  ?? 1,
-            scaleY:  imgData.scaleY  ?? 1,
+            scaleX,
+            scaleY,
+            flipX:   imgData.flipX   ?? false,
             angle:   imgData.angle   ?? 0,
             opacity: imgData.opacity ?? 1,
             selectable: false,
             evented:    false,
+            originX: 'left',
+            originY: 'top',
           });
+
           canvas.add(img);
+
+          // Respecter le z-order si un index est fourni
+          if (imgData.index !== null && imgData.index !== undefined) {
+            canvas.moveTo(img, imgData.index);
+          }
+
           resolve(img);
         },
-        { crossOrigin: 'anonymous' }
+        // crossOrigin n'est PAS envoyé pour les data: URLs (Fabric le gère nativement)
+        imgData.url.startsWith('data:') ? {} : { crossOrigin: 'anonymous' }
       );
     });
   }
@@ -328,29 +374,45 @@ export async function renderThumbnail(canvas, template, set, charOverrides = {},
   const roundText = set.fullRoundText ?? (set.round ? `Round ${set.round}` : '');
   const [phase1Text, phase2Text] = splitRoundText(roundText);
 
-  // 1. Fonds
+  // 1. Fonds (toujours en arrière, sendToBack dans drawBackground)
   if (template.j1?.bg) drawBackground(canvas, template.j1.bg);
   if (template.j2?.bg) drawBackground(canvas, template.j2.bg);
 
-  // 2. Personnages (async, CORS)
+  // 2. Personnages (async, CORS) — avec z-order
   const p1Url = charOverrides.p1CharUrl || template.j1?.characters?.url || null;
   const p2Url = charOverrides.p2CharUrl || template.j2?.characters?.url || null;
-  if (template.j1?.characters) await drawCharacter(canvas, template.j1.characters, p1Url);
-  if (template.j2?.characters) await drawCharacter(canvas, template.j2.characters, p2Url);
+  if (template.j1?.characters) {
+    await drawCharacter(canvas, template.j1.characters, p1Url, template.j1.characters.index ?? null);
+  }
+  if (template.j2?.characters) {
+    await drawCharacter(canvas, template.j2.characters, p2Url, template.j2.characters.index ?? null);
+  }
 
-  // 3. Tags joueurs
-  if (template.j1?.tag) drawTag(canvas, template.j1.tag, p1Tag, fontOverride, sizeOverride, colorOverride);
-  if (template.j2?.tag) drawTag(canvas, template.j2.tag, p2Tag, fontOverride, sizeOverride, colorOverride);
+  // 3. Tags joueurs — avec z-order
+  if (template.j1?.tag) {
+    drawTag(canvas, template.j1.tag, p1Tag, fontOverride, sizeOverride, colorOverride, template.j1.tag.index ?? null);
+  }
+  if (template.j2?.tag) {
+    drawTag(canvas, template.j2.tag, p2Tag, fontOverride, sizeOverride, colorOverride, template.j2.tag.index ?? null);
+  }
 
-  // 4. Phase
-  if (template.phase1) drawTag(canvas, template.phase1, phase1Text, fontOverride, sizeOverride, colorOverride);
-  if (template.phase2) drawTag(canvas, template.phase2, phase2Text, fontOverride, sizeOverride, colorOverride);
+  // 4. Phase — avec z-order
+  if (template.phase1) {
+    drawTag(canvas, template.phase1, phase1Text, fontOverride, sizeOverride, colorOverride, template.phase1.index ?? null);
+  }
+  if (template.phase2) {
+    drawTag(canvas, template.phase2, phase2Text, fontOverride, sizeOverride, colorOverride, template.phase2.index ?? null);
+  }
 
-  // 5. VS
-  if (template.vs) drawVS(canvas, template.vs, fontOverride, sizeOverride, colorOverride);
+  // 5. VS — avec z-order
+  if (template.vs) {
+    drawVS(canvas, template.vs, fontOverride, sizeOverride, colorOverride, template.vs.index ?? null);
+  }
 
-  // 6. Images additionnelles
-  if (template.images?.length) await drawExtraImages(canvas, template.images);
+  // 6. Images additionnelles (logos, overlays, etc.) — avec z-order géré dans drawExtraImages
+  if (template.images?.length) {
+    await drawExtraImages(canvas, template.images);
+  }
 
   canvas.renderAll();
 }
