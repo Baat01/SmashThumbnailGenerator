@@ -25,8 +25,12 @@ export default function SetCard({ set }) {
   const score2 = slot2?.standing?.stats?.score?.value ?? '-';
 
   // Personnages depuis l'API (calculés via games.selections)
-  const apiChar1 = slot1?.detectedCharacters?.[0] ?? null;
-  const apiChar2 = slot2?.detectedCharacters?.[0] ?? null;
+  const apiChar1 = slot1?.detectedCharacters?.[0]
+    ? CHARACTER_MAP[slot1.detectedCharacters[0].id] ?? slot1.detectedCharacters[0]
+    : null;
+  const apiChar2 = slot2?.detectedCharacters?.[0]
+    ? CHARACTER_MAP[slot2.detectedCharacters[0].id] ?? slot2.detectedCharacters[0]
+    : null;
 
   // Override manuel depuis le store
   const override1 = characterOverrides[set.id]?.p1CharId
@@ -73,25 +77,53 @@ export default function SetCard({ set }) {
       </div>
 
       {/* Players VS */}
-      <div className="flex items-center gap-2 mb-3">
+      <div className="flex items-start gap-2 mb-3">
         {/* Joueur 1 */}
-        <div className={`flex-1 text-center ${isWinner1 ? 'text-[var(--color-winner)]' : 'text-[var(--color-loser)]'}`}>
-          <div className="font-bold text-sm truncate">{p1Tag}</div>
-          {char1 && <div className="text-xs text-[var(--color-muted)] mt-0.5">{char1.name}</div>}
-          {isWinner1 && <div className="text-[10px] font-semibold text-[var(--color-winner)] mt-0.5">{t('sets.winner')}</div>}
+        <div className={`flex-1 flex flex-col items-center text-center min-w-0 ${isWinner1 ? 'text-[var(--color-winner)]' : 'text-[var(--color-loser)]'}`}>
+          <div className="h-8 mb-1 flex items-end justify-center">
+            {char1 && (
+              <img 
+                src={`https://raw.githubusercontent.com/Kekwel/ThumbnailGeneratorAssets/main/games/ult/stock/${char1.slug}.png`} 
+                alt={char1.name} 
+                className="w-8 h-8 object-contain drop-shadow-md"
+                onError={(e) => { e.target.style.display = 'none'; }}
+              />
+            )}
+          </div>
+          <div className="font-bold text-sm truncate w-full">{p1Tag}</div>
+          <div className="h-4 mt-0.5 flex items-center justify-center">
+            {char1 && <div className="text-xs text-[var(--color-muted)] truncate px-1 max-w-full">{char1.name}</div>}
+          </div>
+          <div className="h-4 mt-0.5 flex items-start justify-center">
+            {isWinner1 && <div className="text-[10px] font-semibold text-[var(--color-winner)]">{t('sets.winner')}</div>}
+          </div>
         </div>
 
         {/* Score */}
-        <div className="flex flex-col items-center shrink-0">
-          <div className="text-white font-bold text-lg">{score1} – {score2}</div>
+        <div className="flex flex-col items-center justify-start shrink-0 w-16 mt-9">
+          <div className="text-white font-bold text-lg leading-none mb-1">{score1} – {score2}</div>
           <div className="text-[var(--color-muted)] text-[10px] font-bold uppercase tracking-wider">{t('sets.vs')}</div>
         </div>
 
         {/* Joueur 2 */}
-        <div className={`flex-1 text-center ${isWinner2 ? 'text-[var(--color-winner)]' : 'text-[var(--color-loser)]'}`}>
-          <div className="font-bold text-sm truncate">{p2Tag}</div>
-          {char2 && <div className="text-xs text-[var(--color-muted)] mt-0.5">{char2.name}</div>}
-          {isWinner2 && <div className="text-[10px] font-semibold text-[var(--color-winner)] mt-0.5">{t('sets.winner')}</div>}
+        <div className={`flex-1 flex flex-col items-center text-center min-w-0 ${isWinner2 ? 'text-[var(--color-winner)]' : 'text-[var(--color-loser)]'}`}>
+          <div className="h-8 mb-1 flex items-end justify-center">
+            {char2 && (
+              <img 
+                src={`https://raw.githubusercontent.com/Kekwel/ThumbnailGeneratorAssets/main/games/ult/stock/${char2.slug}.png`} 
+                alt={char2.name} 
+                className="w-8 h-8 object-contain drop-shadow-md"
+                onError={(e) => { e.target.style.display = 'none'; }}
+              />
+            )}
+          </div>
+          <div className="font-bold text-sm truncate w-full">{p2Tag}</div>
+          <div className="h-4 mt-0.5 flex items-center justify-center">
+            {char2 && <div className="text-xs text-[var(--color-muted)] truncate px-1 max-w-full">{char2.name}</div>}
+          </div>
+          <div className="h-4 mt-0.5 flex items-start justify-center">
+            {isWinner2 && <div className="text-[10px] font-semibold text-[var(--color-winner)]">{t('sets.winner')}</div>}
+          </div>
         </div>
       </div>
 
