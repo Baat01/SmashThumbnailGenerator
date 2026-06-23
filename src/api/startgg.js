@@ -1,4 +1,5 @@
 import { GraphQLClient } from 'graphql-request';
+import { MOCK_SETS } from './mockData';
 
 const STARTGG_ENDPOINT = 'https://api.start.gg/gql/alpha';
 
@@ -223,71 +224,6 @@ export async function fetchTournamentEvents(apiKey, slug) {
  */
 export async function fetchEventSets(apiKey, eventId, eventName) {
   if (apiKey === 'mock') {
-    const MOCK_SETS = [
-      {
-        id: 1001,
-        fullRoundText: "Pools",
-        round: 1,
-        winnerId: 1,
-        state: "COMPLETED",
-        slots: [
-          {
-            standing: { stats: { score: { value: 2 } } },
-            entrant: { id: 1, name: "BOMIZ", participants: [{ player: { id: 1, gamerTag: "BOMIZ" } }] }
-          },
-          {
-            standing: { stats: { score: { value: 1 } } },
-            entrant: { id: 2, name: "juste_Geo", participants: [{ player: { id: 2, gamerTag: "juste_Geo" } }] }
-          }
-        ],
-        games: [
-          {
-            id: 1,
-            orderNum: 1,
-            selections: [
-              { id: 1, entrant: { id: 1 }, character: { id: 65, name: "Cloud" } },
-              { id: 2, entrant: { id: 2 }, character: { id: 21, name: "Pichu" } }
-            ]
-          }
-        ]
-      },
-      {
-        id: 1002,
-        fullRoundText: "Pools",
-        round: 1,
-        winnerId: 1,
-        state: "COMPLETED",
-        slots: [
-          {
-            standing: { stats: { score: { value: 2 } } },
-            entrant: { id: 3, name: "Bonane", participants: [{ player: { id: 3, gamerTag: "Bonane" } }] }
-          },
-          {
-            standing: { stats: { score: { value: 0 } } },
-            entrant: { id: 4, name: "Dezarme", participants: [{ player: { id: 4, gamerTag: "Dezarme" } }] }
-          }
-        ],
-        games: [
-          {
-            id: 2,
-            orderNum: 1,
-            selections: [
-              { id: 3, entrant: { id: 3 }, character: { id: 14, name: "Peach" } },
-              { id: 4, entrant: { id: 4 }, character: { id: 85, name: "Kazuya" } }
-            ]
-          },
-          {
-            id: 3,
-            orderNum: 2,
-            selections: [
-              { id: 5, entrant: { id: 3 }, character: { id: 14, name: "Peach" } },
-              { id: 6, entrant: { id: 4 }, character: { id: 81, name: "Min Min" } }
-            ]
-          }
-        ]
-      }
-    ];
-
     const allSets = MOCK_SETS.map(s => ({ ...s, eventName }));
     const enrichedSets = allSets.map(set => {
       const charMap = computeCharactersFromGames(set);
