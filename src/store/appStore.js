@@ -71,6 +71,10 @@ const useAppStore = create((set, get) => ({
   setLayoutTemplate: (template, name) => set({ layoutTemplate: template, layoutTemplateName: name }),
   clearLayoutTemplate: () => set({ layoutTemplate: null, layoutTemplateName: '' }),
 
+  // ── Police globale (override du template) ────────────────────────────────
+  selectedFont: '',   // '' = utiliser la police du template JSON
+  setSelectedFont: (font) => set({ selectedFont: font }),
+
   // ── Generation ───────────────────────────────────────────────────
   isGenerating: false,
   generatedCount: 0,

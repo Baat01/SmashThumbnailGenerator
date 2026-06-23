@@ -1,32 +1,74 @@
 import { useRef } from 'react';
 import useAppStore from '../../store/appStore';
 
+// ─── Polices disponibles (avec chargement Google Fonts si nécessaire) ─────────
+const FONTS = [
+  { label: 'Template (défaut)',   value: ''              },
+  { label: 'Futura Bold',         value: 'Futura Bold'   },
+  { label: 'Inter',               value: 'Inter'         },
+  { label: 'Rajdhani',            value: 'Rajdhani'      },
+  { label: 'Arial',               value: 'Arial'         },
+  { label: 'Impact',              value: 'Impact'        },
+  { label: 'Bebas Neue',          value: 'Bebas Neue'    },
+  { label: 'Oswald',              value: 'Oswald'        },
+  { label: 'Roboto',              value: 'Roboto'        },
+  { label: 'Montserrat',          value: 'Montserrat'    },
+  { label: 'Anton',               value: 'Anton'         },
+];
+
+// Police → URL Google Fonts (pour les charger dynamiquement si besoin)
+const GOOGLE_FONT_URLS = {
+  'Bebas Neue':  'https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap',
+  'Oswald':      'https://fonts.googleapis.com/css2?family=Oswald:wght@700&display=swap',
+  'Anton':       'https://fonts.googleapis.com/css2?family=Anton&display=swap',
+  'Montserrat':  'https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap',
+};
+
+function loadGoogleFont(fontName) {
+  if (!GOOGLE_FONT_URLS[fontName]) return;
+  const id = `gf-${fontName.replace(/\s+/g, '-')}`;
+  if (!document.getElementById(id)) {
+    const link = document.createElement('link');
+    link.id   = id;
+    link.rel  = 'stylesheet';
+    link.href = GOOGLE_FONT_URLS[fontName];
+    document.head.appendChild(link);
+  }
+}
+
 /**
  * LayoutImporter
  *
- * Importe le fichier JSON exporté par SmashThumbnailGenerator.
- * Ce JSON contient toute la configuration du canvas (fonds, personnages, tags, VS…).
+ * Importe le fichier JSON exporté par SmashThumbnailGenerator
+ * (accepte .json ET .txt — même contenu JSON).
+ * Contient aussi le sélecteur de police globale.
  */
 export default function LayoutImporter() {
-  const { layoutTemplate, layoutTemplateName, setLayoutTemplate, clearLayoutTemplate } = useAppStore();
+  const {
+    layoutTemplate, layoutTemplateName,
+    setLayoutTemplate, clearLayoutTemplate,
+    selectedFont, setSelectedFont,
+  } = useAppStore();
   const inputRef = useRef(null);
 
+  // ── Lecture du fichier ─────────────────────────────────────────────────────
   async function handleFile(file) {
     if (!file) return;
 
-    // Accepte uniquement les fichiers JSON
-    if (!file.name.endsWith('.json') && file.type !== 'application/json') {
-      alert('Seuls les fichiers JSON exportés par SmashThumbnailGenerator sont acceptés.');
+    const isJson = file.name.endsWith('.json') || file.type === 'application/json';
+    const isTxt  = file.name.endsWith('.txt')  || file.type === 'text/plain';
+
+    if (!isJson && !isTxt) {
+      alert('Seuls les fichiers .json ou .txt (exportés par SmashThumbnailGenerator) sont acceptés.');
       return;
     }
 
     try {
-      const text = await file.text();
+      const text     = await file.text();
       const template = JSON.parse(text);
 
-      // Validation minimale : le JSON doit contenir j1 et j2
       if (!template.j1 || !template.j2) {
-        alert('Ce fichier JSON ne semble pas être un template SmashThumbnailGenerator valide (j1 / j2 manquants).');
+        alert('Ce fichier ne semble pas être un template SmashThumbnailGenerator valide (j1 / j2 manquants).');
         return;
       }
 
@@ -38,7 +80,6 @@ export default function LayoutImporter() {
 
   function handleChange(e) {
     handleFile(e.target.files?.[0]);
-    // Reset pour permettre de re-sélectionner le même fichier
     e.target.value = '';
   }
 
@@ -47,7 +88,44 @@ export default function LayoutImporter() {
     handleFile(e.dataTransfer.files?.[0]);
   }
 
-  // ── Aperçu du template ───────────────────────────────────────────────────
+  function handleFontChange(e) {
+    const font = e.target.value;
+    setSelectedFont(font);
+    if (font) loadGoogleFont(font);
+  }
+
+  // ── Sélecteur de police (toujours visible) ────────────────────────────────
+  const fontPicker = (
+    <div className="mt-4">
+      <label className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wider block mb-1.5">
+        Police du texte
+      </label>
+      <select
+        id="font-picker"
+        value={selectedFont}
+        onChange={handleFontChange}
+        className="
+          w-full px-3 py-2 rounded-lg text-sm text-white
+          bg-[var(--color-surface-2)] border border-[var(--color-border)]
+          focus:outline-none focus:border-[var(--color-accent)]
+          hover:border-white/20 transition-colors cursor-pointer
+        "
+      >
+        {FONTS.map(f => (
+          <option key={f.value} value={f.value} style={{ fontFamily: f.value || 'inherit' }}>
+            {f.label}
+          </option>
+        ))}
+      </select>
+      {selectedFont && (
+        <p className="text-xs text-[var(--color-muted)] mt-1">
+          La police <strong className="text-white">{selectedFont}</strong> remplace celle du template.
+        </p>
+      )}
+    </div>
+  );
+
+  // ── Template déjà chargé ───────────────────────────────────────────────────
   if (layoutTemplate) {
     const j1Colors = layoutTemplate.j1?.bg?.gradient?.colors;
     const j2Colors = layoutTemplate.j2?.bg?.gradient?.colors;
@@ -58,53 +136,45 @@ export default function LayoutImporter() {
           Template chargé
         </p>
         <div className="glass p-3 flex items-center gap-3">
-          {/* Mini aperçu des couleurs du template */}
-          <div className="w-14 h-9 rounded overflow-hidden shrink-0 flex">
+          {/* Mini aperçu des couleurs */}
+          <div className="w-14 h-9 rounded overflow-hidden shrink-0 flex border border-white/10">
             {j1Colors && (
-              <div
-                className="flex-1"
-                style={{
-                  background: j1Colors.length > 1
-                    ? `linear-gradient(to bottom right, ${j1Colors[0].hex}, ${j1Colors[1].hex})`
-                    : j1Colors[0]?.hex,
-                }}
-              />
+              <div className="flex-1" style={{
+                background: j1Colors.length > 1
+                  ? `linear-gradient(to bottom right, ${j1Colors[0].hex}, ${j1Colors[1].hex})`
+                  : j1Colors[0]?.hex,
+              }} />
             )}
             {j2Colors && (
-              <div
-                className="flex-1"
-                style={{
-                  background: j2Colors.length > 1
-                    ? `linear-gradient(to bottom left, ${j2Colors[0].hex}, ${j2Colors[1].hex})`
-                    : j2Colors[0]?.hex,
-                }}
-              />
+              <div className="flex-1" style={{
+                background: j2Colors.length > 1
+                  ? `linear-gradient(to bottom left, ${j2Colors[0].hex}, ${j2Colors[1].hex})`
+                  : j2Colors[0]?.hex,
+              }} />
             )}
           </div>
 
           <div className="flex-1 min-w-0">
             <p className="text-white text-sm font-medium truncate">{layoutTemplateName}</p>
-            <p className="text-[var(--color-muted)] text-xs">
-              Template JSON ✓
-              {layoutTemplate.j1?.characters?.character?.name && (
-                <> · {layoutTemplate.j1.characters.character.name} vs {layoutTemplate.j2?.characters?.character?.name}</>
-              )}
-            </p>
+            <p className="text-[var(--color-muted)] text-xs">Template JSON ✓</p>
           </div>
 
           <button
             onClick={clearLayoutTemplate}
-            className="shrink-0 text-[var(--color-muted)] hover:text-white transition-colors"
+            className="shrink-0 text-[var(--color-muted)] hover:text-red-400 transition-colors text-lg leading-none"
             aria-label="Supprimer le template"
+            title="Supprimer le template"
           >
             ✕
           </button>
         </div>
+
+        {fontPicker}
       </div>
     );
   }
 
-  // ── Zone de drop ─────────────────────────────────────────────────────────
+  // ── Zone de drop ───────────────────────────────────────────────────────────
   return (
     <div className="w-full">
       <p className="text-xs font-medium text-[var(--color-muted)] mb-2 uppercase tracking-wider">
@@ -123,9 +193,9 @@ export default function LayoutImporter() {
         "
       >
         <span className="text-3xl">📄</span>
-        <p className="text-white text-sm font-medium">Importer un template JSON</p>
+        <p className="text-white text-sm font-medium">Importer un template</p>
         <p className="text-[var(--color-muted)] text-xs leading-relaxed">
-          Exporte ton layout depuis{' '}
+          Depuis{' '}
           <a
             href="https://kekwel.github.io/SmashThumbnailGenerator/"
             target="_blank"
@@ -135,17 +205,32 @@ export default function LayoutImporter() {
           >
             SmashThumbnailGenerator
           </a>
-          , puis glisse le fichier <code className="bg-white/10 px-1 rounded">.json</code> ici.
+          , exporte en texte et glisse le fichier{' '}
+          <code className="bg-white/10 px-1 rounded">.json</code> ou{' '}
+          <code className="bg-white/10 px-1 rounded">.txt</code> ici.
         </p>
       </div>
 
       <input
         ref={inputRef}
         type="file"
-        accept=".json,application/json"
+        accept=".json,.txt,application/json,text/plain"
         className="hidden"
         onChange={handleChange}
       />
+
+      <button
+        onClick={async () => {
+          const res = await fetch('/test_template.txt');
+          const text = await res.text();
+          setLayoutTemplate(JSON.parse(text), 'test_template.txt');
+        }}
+        className="mt-2 w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-bold text-xs uppercase"
+      >
+        [DEBUG] Charger test_template.txt
+      </button>
+
+      {fontPicker}
     </div>
   );
 }

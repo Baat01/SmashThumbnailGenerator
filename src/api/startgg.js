@@ -63,7 +63,8 @@ export const GET_EVENT_SETS = `
       name
       sets(
         page: $page
-        perPage: 50
+        perPage: 20
+        sortType: STANDARD
       ) {
         pageInfo {
           total
@@ -92,6 +93,20 @@ export const GET_EVENT_SETS = `
               }
             }
           }
+          games {
+            id
+            orderNum
+            selections {
+              id
+              entrant {
+                id
+              }
+              character {
+                id
+                name
+              }
+            }
+          }
         }
       }
     }
@@ -99,8 +114,46 @@ export const GET_EVENT_SETS = `
 `;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// FONCTIONS DE REQUÊTE
+// HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Détermine le personnage le plus utilisé par chaque entrant dans un set.
+ * En cas d'ex-æquo, retourne le premier rencontré (par ordre de partie).
+ *
+ * @param {object} set  Nœud de set avec games[].selections[]
+ * @returns {Map<number, {id, name}>}  entrantId → character
+ */
+function computeCharactersFromGames(set) {
+  const charCount = new Map(); // entrantId → Map<charId → {count, character}>
+
+  const sortedGames = [...(set.games ?? [])].sort((a, b) => (a.orderNum ?? 0) - (b.orderNum ?? 0));
+
+  for (const game of sortedGames) {
+    for (const sel of (game.selections ?? [])) {
+      const eid  = sel.entrant?.id;
+      const char = sel.character;
+      if (!eid || !char) continue;
+
+      if (!charCount.has(eid)) charCount.set(eid, new Map());
+      const byChar = charCount.get(eid);
+      const prev   = byChar.get(char.id) ?? { count: 0, character: char };
+      byChar.set(char.id, { count: prev.count + 1, character: char });
+    }
+  }
+
+  // Pour chaque entrant, trouve le personnage le plus joué
+  const result = new Map();
+  for (const [entrantId, byChar] of charCount.entries()) {
+    let best = null;
+    for (const { count, character } of byChar.values()) {
+      if (!best || count > best.count) best = { count, character };
+    }
+    if (best) result.set(entrantId, best.character);
+  }
+
+  return result;
+}
 
 /**
  * Vérifie la clé API et récupère les tournois de l'utilisateur.
@@ -174,7 +227,19 @@ export async function fetchEventSets(apiKey, eventId, eventName) {
   const completedSets = allSets.filter(s => s.winnerId != null);
   console.log(`[startgg] Sets complétés (winnerId non null):`, completedSets.length);
 
-  return completedSets;
+  // Enrichissement : détection des personnages via games.selections
+  const enrichedSets = completedSets.map(set => {
+    const charMap = computeCharactersFromGames(set);
+    return {
+      ...set,
+      slots: set.slots.map(slot => ({
+        ...slot,
+        detectedCharacter: charMap.get(slot.entrant?.id) ?? null,
+      })),
+    };
+  });
+
+  return enrichedSets;
 }
 
 /**

@@ -1,5 +1,5 @@
 import useAppStore from '../../store/appStore';
-import { getCharacterFromSelections, getPlayerTag, CHARACTER_MAP } from '../../utils/characters';
+import { getPlayerTag, CHARACTER_MAP } from '../../utils/characters';
 import CharacterPicker from './CharacterPicker';
 
 /**
@@ -22,12 +22,9 @@ export default function SetCard({ set }) {
   const score1 = slot1?.standing?.stats?.score?.value ?? '-';
   const score2 = slot2?.standing?.stats?.score?.value ?? '-';
 
-  // Personnages depuis l'API — selections au niveau du slot (schéma Start.gg réel)
-  const selections1 = slot1?.selections ?? [];
-  const apiChar1    = getCharacterFromSelections(selections1, entrant1?.id);
-
-  const selections2 = slot2?.selections ?? [];
-  const apiChar2    = getCharacterFromSelections(selections2, entrant2?.id);
+  // Personnages depuis l'API (calculés via games.selections)
+  const apiChar1 = slot1?.detectedCharacter ?? null;
+  const apiChar2 = slot2?.detectedCharacter ?? null;
 
   // Override manuel depuis le store
   const override1 = characterOverrides[set.id]?.p1CharId
