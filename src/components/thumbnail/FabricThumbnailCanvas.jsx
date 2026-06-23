@@ -12,7 +12,7 @@ import useAppStore from '../../store/appStore';
  *
  * Priorité pour les personnages :
  *   1. Override manuel (CharacterPicker)
- *   2. Personnage détecté automatiquement par l'API (slot.detectedCharacter)
+ *   2. Personnage détecté automatiquement par l'API (slot.detectedCharacters[0])
  *   3. Personnage par défaut du template JSON
  *
  * Via ref, expose :
@@ -73,7 +73,7 @@ const FabricThumbnailCanvas = forwardRef(function FabricThumbnailCanvas({ set, s
     } else {
       // 2. Personnage détecté automatiquement depuis l'API (games.selections)
       const p1EntrantId = targetSet.slots?.[0]?.entrant?.id;
-      const detected    = targetSet.slots?.[0]?.detectedCharacter;
+      const detected    = targetSet.slots?.[0]?.detectedCharacters?.[0];
       if (detected) {
         charUrls.p1CharUrl = resolveDetectedCharacterUrl(detected);
       }
@@ -84,7 +84,7 @@ const FabricThumbnailCanvas = forwardRef(function FabricThumbnailCanvas({ set, s
       const char = CHARACTER_MAP[setOverrides.p2CharId];
       if (char) charUrls.p2CharUrl = getCharacterImageUrl(char.slug);
     } else {
-      const detected = targetSet.slots?.[1]?.detectedCharacter;
+      const detected = targetSet.slots?.[1]?.detectedCharacters?.[0];
       if (detected) {
         charUrls.p2CharUrl = resolveDetectedCharacterUrl(detected);
       }

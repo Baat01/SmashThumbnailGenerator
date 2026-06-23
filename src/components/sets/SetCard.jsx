@@ -25,8 +25,8 @@ export default function SetCard({ set }) {
   const score2 = slot2?.standing?.stats?.score?.value ?? '-';
 
   // Personnages depuis l'API (calculés via games.selections)
-  const apiChar1 = slot1?.detectedCharacter ?? null;
-  const apiChar2 = slot2?.detectedCharacter ?? null;
+  const apiChar1 = slot1?.detectedCharacters?.[0] ?? null;
+  const apiChar2 = slot2?.detectedCharacters?.[0] ?? null;
 
   // Override manuel depuis le store
   const override1 = characterOverrides[set.id]?.p1CharId

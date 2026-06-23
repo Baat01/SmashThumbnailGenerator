@@ -48,7 +48,7 @@ export default function Stepper({ currentStep }) {
             </div>
 
             {/* Connector */}
-            {index < STEPS.length - 1 && (
+            {index < STEPS_CONFIG.length - 1 && (
               <div
                 className={`step-connector mx-2 mb-5 ${isCompleted ? 'active' : ''}`}
               />

@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import useAppStore from '../../store/appStore';
 import LayoutImporter from './LayoutImporter';
 import FabricThumbnailCanvas from './FabricThumbnailCanvas';
-import { getPlayerTag } from '../../utils/characters';
+import { getPlayerTag, CHARACTER_MAP } from '../../utils/characters';
 import { useTranslation } from '../../hooks/useTranslation';
 
 /**
@@ -15,7 +15,7 @@ import { useTranslation } from '../../hooks/useTranslation';
 export default function ThumbnailPreview() {
   const {
     sets, selectedSets,
-    selectedTournament,
+    selectedTournament, events, characterOverrides,
     layoutTemplate,
     setStep, setIsGenerating, setGeneratedCount,
     isGenerating, generatedCount,
@@ -23,10 +23,45 @@ export default function ThumbnailPreview() {
   const { t } = useTranslation();
 
   const [progress, setProgress] = useState(0);
+  const [copied, setCopied] = useState(false);
   const canvasRef = useRef(null);
 
   const setsToGenerate = sets.filter(s => selectedSets.includes(s.id));
   const previewSet = setsToGenerate[0] ?? null;
+
+  // ── Copie des titres ──────────────────────────────────────────────────────
+  function handleCopyTitles() {
+    const titles = setsToGenerate.map(set => {
+      const p1 = getPlayerTag(set.slots?.[0]?.entrant);
+      const p2 = getPlayerTag(set.slots?.[1]?.entrant);
+      const round = set.fullRoundText ?? `Round ${set.round}`;
+
+      const getCharNames = (slotIndex) => {
+        const overrideId = characterOverrides[set.id]?.[slotIndex];
+        if (overrideId && CHARACTER_MAP[overrideId]) {
+          return CHARACTER_MAP[overrideId].name;
+        }
+        const detected = set.slots?.[slotIndex]?.detectedCharacters;
+        if (detected && detected.length > 0) {
+          return detected.map(c => c.name).join('/');
+        }
+        return '?';
+      };
+
+      const p1Chars = getCharNames(0);
+      const p2Chars = getCharNames(1);
+
+      let title = `${p1} (${p1Chars}) vs ${p2} (${p2Chars}) - ${round} - ${selectedTournament?.name}`;
+      if (events.length > 1 && set.eventName) {
+        title += ` - ${set.eventName}`;
+      }
+      return title;
+    }).join('\n');
+
+    navigator.clipboard.writeText(titles);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
 
   // ── Génération en boucle ──────────────────────────────────────────────────
   async function handleGenerate() {
@@ -129,7 +164,7 @@ export default function ThumbnailPreview() {
             <h3 className="text-sm font-semibold text-white mb-3">
               {t('preview.selectedSets')} ({setsToGenerate.length})
             </h3>
-            <div className="flex flex-col gap-1.5 max-h-52 overflow-y-auto">
+            <div className="flex flex-col gap-1.5 max-h-52 overflow-y-auto mb-4">
               {setsToGenerate.map(set => (
                 <div key={set.id} className="flex items-center justify-between text-xs text-[var(--color-muted)]">
                   <span className="truncate flex-1">{set.fullRoundText}</span>
@@ -139,6 +174,24 @@ export default function ThumbnailPreview() {
                 </div>
               ))}
             </div>
+
+            {/* Bouton de copie des titres */}
+            {setsToGenerate.length > 0 && (
+              <button
+                onClick={handleCopyTitles}
+                className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-[var(--color-surface-2)] hover:bg-[var(--color-border)] text-xs text-white transition-colors border border-[var(--color-border)]"
+              >
+                {copied ? (
+                  <>
+                    <span className="text-green-400">✅</span> {t('preview.titlesCopied')}
+                  </>
+                ) : (
+                  <>
+                    <span>📋</span> {t('preview.copyTitles')}
+                  </>
+                )}
+              </button>
+            )}
           </div>
 
           {/* Bouton Générer / Barre de progression */}
