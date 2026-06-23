@@ -50,6 +50,13 @@ export default function SetList() {
 
         <div className="flex items-center gap-2 flex-wrap">
           <button
+            onClick={() => setStep(1)}
+            className="text-xs px-3 py-1.5 rounded-lg border border-[var(--color-border)] text-[var(--color-muted)] hover:text-white hover:border-white/20 transition-colors"
+            title="Changer de tournoi"
+          >
+            ← Retour
+          </button>
+          <button
             onClick={selectAllSets}
             className="text-xs px-3 py-1.5 rounded-lg border border-[var(--color-border)] text-[var(--color-muted)] hover:text-white hover:border-white/20 transition-colors"
           >

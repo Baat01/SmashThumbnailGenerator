@@ -11,7 +11,7 @@ export default function CharacterPicker({ value, onChange, label, id }) {
   return (
     <div className="flex flex-col gap-1">
       {label && (
-        <label htmlFor={id} className="text-xs text-[var(--color-muted)] font-medium">
+        <label htmlFor={id} className="text-xs text-[var(--color-muted)] font-medium text-center truncate">
           {label}
         </label>
       )}
@@ -24,7 +24,7 @@ export default function CharacterPicker({ value, onChange, label, id }) {
           text-white text-xs rounded-lg px-3 py-2
           focus:outline-none focus:border-[var(--color-accent)]
           cursor-pointer transition-colors duration-200
-          appearance-none
+          appearance-none text-center
         "
       >
         <option value="">{t('sets.chooseChar')}</option>

@@ -28,13 +28,22 @@ export default function EventPicker() {
 
   return (
     <div className="animate-fade-in-up px-4 max-w-2xl mx-auto w-full">
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-white">
-          {t('tournament.eventTitle1')} <span className="gradient-text">{t('tournament.eventTitle2')}</span>
-        </h2>
-        <p className="text-[var(--color-muted)] text-sm mt-1">
-          {t('tournament.eventDesc1')} <strong className="text-white">{selectedTournament?.name}</strong> {t('tournament.eventDesc2')} {events.length} {t('tournament.eventDesc3')}
-        </p>
+      <div className="mb-8 flex items-start gap-4">
+        <button
+          onClick={() => useAppStore.getState().setStep(1)}
+          className="text-xs px-3 py-1.5 rounded-lg border border-[var(--color-border)] text-[var(--color-muted)] hover:text-white hover:border-white/20 transition-colors mt-1"
+          title="Changer de tournoi"
+        >
+          ← Retour
+        </button>
+        <div>
+          <h2 className="text-2xl font-bold text-white">
+            {t('tournament.eventTitle1')} <span className="gradient-text">{t('tournament.eventTitle2')}</span>
+          </h2>
+          <p className="text-[var(--color-muted)] text-sm mt-1">
+            {t('tournament.eventDesc1')} <strong className="text-white">{selectedTournament?.name}</strong> {t('tournament.eventDesc2')} {events.length} {t('tournament.eventDesc3')}
+          </p>
+        </div>
       </div>
 
       {error && (

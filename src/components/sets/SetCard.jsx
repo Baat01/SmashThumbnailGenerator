@@ -146,22 +146,26 @@ export default function SetCard({ set }) {
             {t('sets.manualSelection')}
           </p>
           <div className="flex gap-2">
-            {needsChar1 && (
-              <CharacterPicker
-                id={`char-p1-${set.id}`}
-                label={p1Tag}
-                value={characterOverrides[set.id]?.p1CharId ?? null}
-                onChange={(charId) => setCharacterOverride(set.id, 'p1CharId', charId)}
-              />
-            )}
-            {needsChar2 && (
-              <CharacterPicker
-                id={`char-p2-${set.id}`}
-                label={p2Tag}
-                value={characterOverrides[set.id]?.p2CharId ?? null}
-                onChange={(charId) => setCharacterOverride(set.id, 'p2CharId', charId)}
-              />
-            )}
+            <div className="flex-1 min-w-0">
+              {needsChar1 && (
+                <CharacterPicker
+                  id={`char-p1-${set.id}`}
+                  label={p1Tag}
+                  value={characterOverrides[set.id]?.p1CharId ?? null}
+                  onChange={(charId) => setCharacterOverride(set.id, 'p1CharId', charId)}
+                />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              {needsChar2 && (
+                <CharacterPicker
+                  id={`char-p2-${set.id}`}
+                  label={p2Tag}
+                  value={characterOverrides[set.id]?.p2CharId ?? null}
+                  onChange={(charId) => setCharacterOverride(set.id, 'p2CharId', charId)}
+                />
+              )}
+            </div>
           </div>
         </div>
       )}
