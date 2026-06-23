@@ -22,7 +22,7 @@ import useAppStore from '../../store/appStore';
 const FabricThumbnailCanvas = forwardRef(function FabricThumbnailCanvas({ set, scale = 1 }, ref) {
   const canvasEl     = useRef(null);
   const fabricCanvas = useRef(null);
-  const { layoutTemplate, characterOverrides, selectedFont } = useAppStore();
+  const { layoutTemplate, characterOverrides, selectedFont, selectedFontSize, selectedFontColor } = useAppStore();
 
   // ── Expose les méthodes au parent ──────────────────────────────────────────
   useImperativeHandle(ref, () => ({
@@ -56,7 +56,7 @@ const FabricThumbnailCanvas = forwardRef(function FabricThumbnailCanvas({ set, s
   useEffect(() => {
     if (!fabricCanvas.current || !layoutTemplate || !set) return;
     doRender(fabricCanvas.current, set);
-  }, [layoutTemplate, set, characterOverrides, selectedFont]);
+  }, [layoutTemplate, set, characterOverrides, selectedFont, selectedFontSize, selectedFontColor]);
 
   // ── Fonction interne de rendu ──────────────────────────────────────────────
   const doRender = useCallback(async (canvas, targetSet) => {
@@ -90,8 +90,16 @@ const FabricThumbnailCanvas = forwardRef(function FabricThumbnailCanvas({ set, s
       }
     }
 
-    await renderThumbnail(canvas, layoutTemplate, targetSet, charUrls, selectedFont || null);
-  }, [layoutTemplate, characterOverrides, selectedFont]);
+    await renderThumbnail(
+      canvas,
+      layoutTemplate,
+      targetSet,
+      charUrls,
+      selectedFont || null,
+      selectedFontSize || null,
+      selectedFontColor || null
+    );
+  }, [layoutTemplate, characterOverrides, selectedFont, selectedFontSize, selectedFontColor]);
 
   // ── Rendu JSX ─────────────────────────────────────────────────────────────
   return (

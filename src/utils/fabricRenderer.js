@@ -160,7 +160,7 @@ export function drawCharacter(canvas, charData, overrideUrl = null) {
 // du groupe des coordonnées des enfants pour les stocker en coordonnées locales.
 // Résultat : le groupe tourne autour de son coin supérieur gauche (text.x, text.y).
 
-export function drawTag(canvas, tagData, textOverride = null, fontOverride = null) {
+export function drawTag(canvas, tagData, textOverride = null, fontOverride = null, sizeOverride = null, colorOverride = null) {
   if (!tagData) return null;
   const { angle, text, bg } = tagData;
   const displayText = textOverride !== null ? textOverride : (text?.value ?? '');
@@ -176,43 +176,64 @@ export function drawTag(canvas, tagData, textOverride = null, fontOverride = nul
     bg?.colorDirection
   );
 
-  // bgRect positionné aux coordonnées canvas ABSOLUES
+  // Le bgRect est placé en haut à gauche du groupe
   const bgRect = new fabric.Rect({
-    left:   bg?.x ?? 0,
-    top:    bg?.y ?? 0,
-    width:  bg?.width  ?? 400,
-    height: bg?.height ?? 60,
-    scaleX: bgScaleX,
-    scaleY: bgScaleY,
-    fill:   bgFill,
+    left: 0,
+    top: 0,
+    width: bgVisW,
+    height: bgVisH,
+    fill: bgFill,
     originX: 'left',
     originY: 'top',
     strokeWidth: 0,
   });
 
-  // textObj positionné aux coordonnées canvas ABSOLUES
   const textObj = new fabric.Text(displayText, {
-    left:       text?.x ?? 0,
-    top:        text?.y ?? 0,
-    fontSize:   text?.fontSize   ?? 40,
-    fill:       text?.fill       ?? '#000000',
+    left: 0, // Sera recalculé juste après
+    top: 0,
+    fontSize: sizeOverride ? parseInt(sizeOverride) : (text?.fontSize ?? 40),
+    fill: colorOverride || text?.fill || '#000000',
     fontFamily: fontOverride || text?.font || 'Arial',
     fontWeight: text?.fontWeight ?? 'normal',
-    fontStyle:  text?.fontStyle  ?? 'normal',
-    originX: 'center',
-    originY: 'center',
+    fontStyle: text?.fontStyle ?? 'normal',
+    originX: 'left',
+    originY: 'top',
     strokeWidth: 0,
   });
 
-  // Groupe à (text.x, text.y) — originX/Y = 'left'/'top' (comportement original)
+  // Calcul du positionnement du texte par rapport au bgRect (qui est à 0,0)
+  const padding = 25;
+  const textW = textObj.getScaledWidth();
+  const textH = textObj.getScaledHeight();
+
+  let textLeft = (bgVisW - textW) / 2; // Par défaut au centre
+  if (text?.alignmentX === 'left') {
+    textLeft = padding;
+  } else if (text?.alignmentX === 'right') {
+    textLeft = bgVisW - textW - padding;
+  }
+
+  let textTop = (bgVisH - textH) / 2; // Par défaut au milieu
+  if (text?.alignmentY === 'top') {
+    textTop = padding;
+  } else if (text?.alignmentY === 'bottom') {
+    textTop = bgVisH - textH - padding;
+  }
+
+  textObj.set({
+    left: textLeft,
+    top: textTop
+  });
+
+  // text.x et text.y définissent le coin supérieur gauche absolu du bandeau !
   const group = new fabric.Group([bgRect, textObj], {
-    left:       text?.x ?? 0,
-    top:        text?.y ?? 0,
-    angle:      angle   ?? 0,
-    strokeWidth: 0,
+    left: text?.x ?? 0,
+    top: text?.y ?? 0,
+    originX: 'left',
+    originY: 'top',
+    angle: angle ?? 0,
     selectable: false,
-    evented:    false,
-    // PAS de originX:'center' — on respecte le comportement original
+    evented: false,
   });
 
   canvas.add(group);
@@ -221,15 +242,15 @@ export function drawTag(canvas, tagData, textOverride = null, fontOverride = nul
 
 // ─── Texte VS ──────────────────────────────────────────────────────────────────
 
-export function drawVS(canvas, vsData, fontOverride = null) {
+export function drawVS(canvas, vsData, fontOverride = null, sizeOverride = null, colorOverride = null) {
   if (!vsData?.text) return null;
   const { text, shadow, scale, width, height, angle } = vsData;
 
   const vsText = new fabric.Text(text.value ?? 'VS', {
     left:       text.x ?? 640,
     top:        text.y ?? 305,
-    fontSize:   text.fontSize  ?? 99,
-    fill:       text.fill      ?? '#000000',
+    fontSize:   sizeOverride ? parseInt(sizeOverride) * 2.5 : (text.fontSize ?? 99),
+    fill:       colorOverride || text.fill || '#000000',
     fontFamily: fontOverride ?? text.font ?? 'Arial',
     fontWeight: text.fontWeight ?? 'bold',
     fontStyle:  text.fontStyle  ?? 'italic',
@@ -295,7 +316,7 @@ export async function drawExtraImages(canvas, images = []) {
  * @param {object}        charOverrides  { p1CharUrl?, p2CharUrl? }
  * @param {string}        fontOverride   Nom de police globale (optionnel)
  */
-export async function renderThumbnail(canvas, template, set, charOverrides = {}, fontOverride = null) {
+export async function renderThumbnail(canvas, template, set, charOverrides = {}, fontOverride = null, sizeOverride = null, colorOverride = null) {
   canvas.clear();
   canvas.setBackgroundColor('#111111', () => {});
 
@@ -318,15 +339,15 @@ export async function renderThumbnail(canvas, template, set, charOverrides = {},
   if (template.j2?.characters) await drawCharacter(canvas, template.j2.characters, p2Url);
 
   // 3. Tags joueurs
-  if (template.j1?.tag) drawTag(canvas, template.j1.tag, p1Tag, fontOverride);
-  if (template.j2?.tag) drawTag(canvas, template.j2.tag, p2Tag, fontOverride);
+  if (template.j1?.tag) drawTag(canvas, template.j1.tag, p1Tag, fontOverride, sizeOverride, colorOverride);
+  if (template.j2?.tag) drawTag(canvas, template.j2.tag, p2Tag, fontOverride, sizeOverride, colorOverride);
 
   // 4. Phase
-  if (template.phase1) drawTag(canvas, template.phase1, phase1Text, fontOverride);
-  if (template.phase2) drawTag(canvas, template.phase2, phase2Text, fontOverride);
+  if (template.phase1) drawTag(canvas, template.phase1, phase1Text, fontOverride, sizeOverride, colorOverride);
+  if (template.phase2) drawTag(canvas, template.phase2, phase2Text, fontOverride, sizeOverride, colorOverride);
 
   // 5. VS
-  if (template.vs) drawVS(canvas, template.vs, fontOverride);
+  if (template.vs) drawVS(canvas, template.vs, fontOverride, sizeOverride, colorOverride);
 
   // 6. Images additionnelles
   if (template.images?.length) await drawExtraImages(canvas, template.images);

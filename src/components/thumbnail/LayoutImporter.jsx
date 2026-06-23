@@ -48,6 +48,8 @@ export default function LayoutImporter() {
     layoutTemplate, layoutTemplateName,
     setLayoutTemplate, clearLayoutTemplate,
     selectedFont, setSelectedFont,
+    selectedFontSize, setSelectedFontSize,
+    selectedFontColor, setSelectedFontColor,
   } = useAppStore();
   const inputRef = useRef(null);
 
@@ -122,6 +124,58 @@ export default function LayoutImporter() {
           La police <strong className="text-white">{selectedFont}</strong> remplace celle du template.
         </p>
       )}
+
+      {/* Taille de police */}
+      <div className="mt-4">
+        <label className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wider block mb-1.5">
+          Taille du texte (Optionnel)
+        </label>
+        <input
+          type="number"
+          placeholder="ex: 45"
+          value={selectedFontSize}
+          onChange={(e) => setSelectedFontSize(e.target.value)}
+          className="
+            w-full px-3 py-2 rounded-lg text-sm text-white
+            bg-[var(--color-surface-2)] border border-[var(--color-border)]
+            focus:outline-none focus:border-[var(--color-accent)]
+            transition-colors
+          "
+        />
+      </div>
+
+      {/* Couleur du texte */}
+      <div className="mt-4">
+        <label className="text-xs font-medium text-[var(--color-muted)] uppercase tracking-wider block mb-1.5">
+          Couleur du texte (Optionnel)
+        </label>
+        <div className="flex gap-2">
+          <input
+            type="color"
+            value={selectedFontColor || '#ffffff'}
+            onChange={(e) => setSelectedFontColor(e.target.value)}
+            className="w-10 h-10 p-1 rounded bg-[var(--color-surface-2)] border border-[var(--color-border)] cursor-pointer shrink-0"
+          />
+          <input
+            type="text"
+            placeholder="ex: #ffffff"
+            value={selectedFontColor}
+            onChange={(e) => setSelectedFontColor(e.target.value)}
+            className="
+              flex-1 px-3 py-2 rounded-lg text-sm text-white
+              bg-[var(--color-surface-2)] border border-[var(--color-border)]
+              focus:outline-none focus:border-[var(--color-accent)]
+              transition-colors
+            "
+          />
+        </div>
+        <button 
+          className="text-xs text-[var(--color-muted)] hover:text-white mt-1 underline"
+          onClick={() => setSelectedFontColor('')}
+        >
+          Réinitialiser la couleur
+        </button>
+      </div>
     </div>
   );
 
