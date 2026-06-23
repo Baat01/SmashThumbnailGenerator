@@ -87,7 +87,6 @@ export function drawBackground(canvas, bg) {
     originY: 'top',
   });
   canvas.add(rect);
-  canvas.sendToBack(rect);
   return rect;
 }
 
@@ -97,44 +96,94 @@ export function drawBackground(canvas, bg) {
  * Charge et dessine une image de personnage (j1.characters ou j2.characters).
  * Applique le z-order via canvas.moveTo(img, zIndex) si fourni.
  */
-export function drawCharacter(canvas, charData, overrideUrl = null, zIndex = null) {
+export function drawCharacter(canvas, charData, overrideUrl = null, zIndex = null, side = null) {
   return new Promise((resolve) => {
     const rawUrl = overrideUrl || charData?.url;
     if (!rawUrl) { resolve(null); return; }
 
     const { x, y, width, height, flipX, angle, scale, shadow } = charData;
 
+    let clipPath = null;
+    if (side === 'j1') {
+      clipPath = new fabric.Rect({ width: 640, height: 720, left: 0, top: 0, absolutePositioned: true, strokeWidth: 0 });
+    } else if (side === 'j2') {
+      clipPath = new fabric.Rect({ width: 640, height: 720, left: 640, top: 0, absolutePositioned: true, strokeWidth: 0 });
+    }
+
     const applyAndAdd = (img) => {
       const origW = img.getOriginalSize?.()?.width  ?? img.width;
-      const origH = img.getOriginalSize?.()?.height ?? img.height;
+      const baseScale = width ? (width / origW) : 1;
+      const scaledHeight = (img.getOriginalSize?.()?.height ?? img.height) * baseScale;
 
-      img.set({
-        left:    x  ?? 0,
-        top:     y  ?? 0,
-        scaleX:  ((width  ?? origW) / origW) * (scale?.x ?? 1),
-        scaleY:  ((height ?? origH) / origH) * (scale?.y ?? 1),
-        flipX:   flipX ?? false,
-        angle:   angle ?? 0,
-        selectable: false,
-        evented:    false,
-        originX: 'left',
-        originY: 'top',
-      });
+      const finalScaleX = baseScale * (scale?.x ?? 1);
+      const finalScaleY = baseScale * (scale?.y ?? 1);
 
-      if (shadow?.active) {
-        img.set('shadow', new fabric.Shadow({
-          color:   shadow.color   ?? '#000000',
-          blur:    shadow.blur    ?? 10,
-          offsetX: shadow.x       ?? 5,
-          offsetY: shadow.y       ?? 5,
-        }));
-      }
+      const renderShadowAndImage = () => {
+        if (shadow?.active) {
+          // Reproduction fidèle du CustomImage.js (ombre via image dupliquée)
+          img.clone((shadowImg) => {
+            const tintFilter = new fabric.Image.filters.BlendColor({
+              color: shadow.color ?? '#000000',
+              mode: 'tint',
+            });
+            shadowImg.filters.push(tintFilter);
+            
+            if (shadow.blur) {
+              shadowImg.filters.push(new fabric.Image.filters.Blur({ blur: shadow.blur }));
+            }
+            shadowImg.applyFilters();
 
-      canvas.add(img);
-      if (zIndex !== null && zIndex !== undefined) {
-        canvas.moveTo(img, zIndex);
-      }
-      resolve(img);
+            // CustomImage.js utilise newY = canvas.height - getScaledHeight() pour l'ombre !
+            const newY = 720 - scaledHeight;
+            
+            shadowImg.set({
+              left: (x ?? 0) + (shadow.x ?? -10),
+              top: newY + (shadow.y ?? 10),
+              scaleX: finalScaleX,
+              scaleY: finalScaleY,
+              flipX: flipX ?? false,
+              angle: angle ?? 0,
+              selectable: false,
+              evented: false,
+              originX: 'left',
+              originY: 'top',
+              clipPath: clipPath
+            });
+
+            canvas.add(shadowImg);
+            if (zIndex !== null && zIndex !== undefined) {
+              shadowImg._myZIndex = zIndex - 0.5;
+            }
+            addMainImage();
+          });
+        } else {
+          addMainImage();
+        }
+      };
+
+      const addMainImage = () => {
+        img.set({
+          left:    x  ?? 0,
+          top:     y  ?? 0,
+          scaleX:  finalScaleX,
+          scaleY:  finalScaleY,
+          flipX:   flipX ?? false,
+          angle:   angle ?? 0,
+          selectable: false,
+          evented:    false,
+          originX: 'left',
+          originY: 'top',
+          clipPath: clipPath
+        });
+        
+        canvas.add(img);
+        if (zIndex !== null && zIndex !== undefined) {
+          img._myZIndex = zIndex;
+        }
+        resolve(img);
+      };
+
+      renderShadowAndImage();
     };
 
     const tryLoad = (url, fallback) => {
@@ -173,7 +222,7 @@ export function drawCharacter(canvas, charData, overrideUrl = null, zIndex = nul
 // du groupe des coordonnées des enfants pour les stocker en coordonnées locales.
 // Résultat : le groupe tourne autour de son coin supérieur gauche (text.x, text.y).
 
-export function drawTag(canvas, tagData, textOverride = null, fontOverride = null, sizeOverride = null, colorOverride = null, zIndex = null) {
+export function drawTag(canvas, tagData, textOverride = null, fontOverride = null, sizeOverride = null, colorOverride = null, zIndex = null, side = null) {
   if (!tagData) return null;
   const { angle, text, bg } = tagData;
   const displayText = textOverride !== null ? textOverride : (text?.value ?? '');
@@ -238,6 +287,13 @@ export function drawTag(canvas, tagData, textOverride = null, fontOverride = nul
     top: textTop
   });
 
+  let clipPath = null;
+  if (side === 'j1') {
+    clipPath = new fabric.Rect({ width: 640, height: 720, left: 0, top: 0, absolutePositioned: true, strokeWidth: 0 });
+  } else if (side === 'j2') {
+    clipPath = new fabric.Rect({ width: 640, height: 720, left: 640, top: 0, absolutePositioned: true, strokeWidth: 0 });
+  }
+
   // text.x et text.y définissent le coin supérieur gauche absolu du bandeau !
   const group = new fabric.Group([bgRect, textObj], {
     left: text?.x ?? 0,
@@ -247,11 +303,12 @@ export function drawTag(canvas, tagData, textOverride = null, fontOverride = nul
     angle: angle ?? 0,
     selectable: false,
     evented: false,
+    clipPath: clipPath
   });
 
   canvas.add(group);
   if (zIndex !== null && zIndex !== undefined) {
-    canvas.moveTo(group, zIndex);
+    group._myZIndex = zIndex;
   }
   return group;
 }
@@ -290,7 +347,7 @@ export function drawVS(canvas, vsData, fontOverride = null, sizeOverride = null,
 
   canvas.add(vsText);
   if (zIndex !== null && zIndex !== undefined) {
-    canvas.moveTo(vsText, zIndex);
+    vsText._myZIndex = zIndex;
   }
   return vsText;
 }
@@ -339,7 +396,7 @@ export async function drawExtraImages(canvas, images = []) {
 
           // Respecter le z-order si un index est fourni
           if (imgData.index !== null && imgData.index !== undefined) {
-            canvas.moveTo(img, imgData.index);
+            img._myZIndex = imgData.index;
           }
 
           resolve(img);
@@ -374,34 +431,44 @@ export async function renderThumbnail(canvas, template, set, charOverrides = {},
   const roundText = set.fullRoundText ?? (set.round ? `Round ${set.round}` : '');
   const [phase1Text, phase2Text] = splitRoundText(roundText);
 
-  // 1. Fonds (toujours en arrière, sendToBack dans drawBackground)
-  if (template.j1?.bg) drawBackground(canvas, template.j1.bg);
-  if (template.j2?.bg) drawBackground(canvas, template.j2.bg);
+  // 1. Fonds (on assigne un z-index très bas)
+  if (template.j1?.bg) {
+    const bg1 = drawBackground(canvas, template.j1.bg);
+    bg1._myZIndex = -10;
+  }
+  if (template.j2?.bg) {
+    const bg2 = drawBackground(canvas, template.j2.bg);
+    bg2._myZIndex = -10;
+  }
 
-  // 2. Personnages (async, CORS) — avec z-order
+  // 2. Personnages (async, CORS) — on attend qu'ils chargent
   const p1Url = charOverrides.p1CharUrl || template.j1?.characters?.url || null;
   const p2Url = charOverrides.p2CharUrl || template.j2?.characters?.url || null;
-  if (template.j1?.characters) {
-    await drawCharacter(canvas, template.j1.characters, p1Url, template.j1.characters.index ?? null);
-  }
-  if (template.j2?.characters) {
-    await drawCharacter(canvas, template.j2.characters, p2Url, template.j2.characters.index ?? null);
-  }
+  
+  const p1Promise = template.j1?.characters
+    ? drawCharacter(canvas, template.j1.characters, p1Url, template.j1.characters.index ?? null, 'j1')
+    : Promise.resolve();
+
+  const p2Promise = template.j2?.characters
+    ? drawCharacter(canvas, template.j2.characters, p2Url, template.j2.characters.index ?? null, 'j2')
+    : Promise.resolve();
+
+  await Promise.all([p1Promise, p2Promise]);
 
   // 3. Tags joueurs — avec z-order
   if (template.j1?.tag) {
-    drawTag(canvas, template.j1.tag, p1Tag, fontOverride, sizeOverride, colorOverride, template.j1.tag.index ?? null);
+    drawTag(canvas, template.j1.tag, p1Tag, fontOverride, sizeOverride, colorOverride, template.j1.tag.index ?? null, 'j1');
   }
   if (template.j2?.tag) {
-    drawTag(canvas, template.j2.tag, p2Tag, fontOverride, sizeOverride, colorOverride, template.j2.tag.index ?? null);
+    drawTag(canvas, template.j2.tag, p2Tag, fontOverride, sizeOverride, colorOverride, template.j2.tag.index ?? null, 'j2');
   }
 
   // 4. Phase — avec z-order
   if (template.phase1) {
-    drawTag(canvas, template.phase1, phase1Text, fontOverride, sizeOverride, colorOverride, template.phase1.index ?? null);
+    drawTag(canvas, template.phase1, phase1Text, fontOverride, sizeOverride, colorOverride, template.phase1.index ?? null, 'j1');
   }
   if (template.phase2) {
-    drawTag(canvas, template.phase2, phase2Text, fontOverride, sizeOverride, colorOverride, template.phase2.index ?? null);
+    drawTag(canvas, template.phase2, phase2Text, fontOverride, sizeOverride, colorOverride, template.phase2.index ?? null, 'j2');
   }
 
   // 5. VS — avec z-order
@@ -413,6 +480,13 @@ export async function renderThumbnail(canvas, template, set, charOverrides = {},
   if (template.images?.length) {
     await drawExtraImages(canvas, template.images);
   }
+
+  // Tri final de tous les objets du canvas selon _myZIndex pour garantir l'ordre
+  canvas._objects.sort((a, b) => {
+    const za = a._myZIndex ?? 0;
+    const zb = b._myZIndex ?? 0;
+    return za - zb;
+  });
 
   canvas.renderAll();
 }
