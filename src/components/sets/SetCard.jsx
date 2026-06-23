@@ -1,5 +1,5 @@
 import useAppStore from '../../store/appStore';
-import { getPlayerTag, CHARACTER_MAP } from '../../utils/characters';
+import { getPlayerTag, CHARACTER_MAP, CHARACTER_NAME_MAP } from '../../utils/characters';
 import CharacterPicker from './CharacterPicker';
 import { useTranslation } from '../../hooks/useTranslation';
 
@@ -24,13 +24,22 @@ export default function SetCard({ set }) {
   const score1 = slot1?.standing?.stats?.score?.value ?? '-';
   const score2 = slot2?.standing?.stats?.score?.value ?? '-';
 
+  // Helper pour résoudre le personnage retourné par l'API (gère ID mock ou ID global Start.gg)
+  const resolveCharacter = (apiChar) => {
+    if (!apiChar) return null;
+    // Si l'ID matche directement (ex: mock data)
+    if (CHARACTER_MAP[apiChar.id]) return CHARACTER_MAP[apiChar.id];
+    // Sinon on tente de faire correspondre par le nom (Start.gg renvoie un nom exact en string)
+    if (apiChar.name && CHARACTER_NAME_MAP[apiChar.name.toLowerCase()]) {
+      return CHARACTER_NAME_MAP[apiChar.name.toLowerCase()];
+    }
+    // Fallback: on renvoie l'objet brut qui ne contiendra probablement pas de slug, l'image ne chargera pas
+    return apiChar;
+  };
+
   // Personnages depuis l'API (calculés via games.selections)
-  const apiChar1 = slot1?.detectedCharacters?.[0]
-    ? CHARACTER_MAP[slot1.detectedCharacters[0].id] ?? slot1.detectedCharacters[0]
-    : null;
-  const apiChar2 = slot2?.detectedCharacters?.[0]
-    ? CHARACTER_MAP[slot2.detectedCharacters[0].id] ?? slot2.detectedCharacters[0]
-    : null;
+  const apiChar1 = resolveCharacter(slot1?.detectedCharacters?.[0]);
+  const apiChar2 = resolveCharacter(slot2?.detectedCharacters?.[0]);
 
   // Override manuel depuis le store
   const override1 = characterOverrides[set.id]?.p1CharId

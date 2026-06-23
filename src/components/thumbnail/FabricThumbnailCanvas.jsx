@@ -1,7 +1,7 @@
 import { useEffect, useRef, forwardRef, useImperativeHandle, useCallback } from 'react';
 import { fabric } from 'fabric';
 import { renderThumbnail, getCharacterImageUrl } from '../../utils/fabricRenderer';
-import { CHARACTER_MAP } from '../../utils/characters';
+import { CHARACTER_MAP, CHARACTER_NAME_MAP } from '../../utils/characters';
 import useAppStore from '../../store/appStore';
 
 /**
@@ -125,19 +125,16 @@ const FabricThumbnailCanvas = forwardRef(function FabricThumbnailCanvas({ set, s
 });
 
 // ─── Helper : convertit un character Start.gg { id, name } en URL d'image ────
-// Recherche d'abord dans notre CHARACTER_MAP local (slug pour URL exacte),
+// Recherche d'abord dans notre CHARACTER_MAP ou CHARACTER_NAME_MAP (slug pour URL exacte),
 // sinon on construit une URL depuis le nom formaté.
 function resolveDetectedCharacterUrl(character) {
   const ASSETS = 'https://raw.githubusercontent.com/Kekwel/ThumbnailGeneratorAssets/main/games/ult/char';
 
-  // Cherche dans CHARACTER_MAP par nom exact
-  const match = Object.values(CHARACTER_MAP).find(
-    c => c.name.toLowerCase() === character.name.toLowerCase()
-  );
+  const match = CHARACTER_MAP[character.id] || CHARACTER_NAME_MAP[character.name?.toLowerCase()];
   if (match) return `${ASSETS}/${match.slug}_0_00.png`;
 
   // Fallback : formatName depuis le nom (minuscules, espaces → _)
-  const slug = character.name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+  const slug = character.name?.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '') || 'unknown';
   return `${ASSETS}/${slug}_0_00.png`;
 }
 

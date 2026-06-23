@@ -99,6 +99,11 @@ export const CHARACTER_MAP = Object.fromEntries(
   CHARACTERS.map(c => [c.id, c])
 );
 
+/** Map rapide : name (minuscules) → character */
+export const CHARACTER_NAME_MAP = Object.fromEntries(
+  CHARACTERS.map(c => [c.name.toLowerCase(), c])
+);
+
 /**
  * Récupère le personnage depuis le tableau `selections` d'un slot Start.gg.
  * Les selections sont maintenant au niveau du slot (pas du participant).
