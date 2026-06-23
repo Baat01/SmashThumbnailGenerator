@@ -77,7 +77,7 @@ const useAppStore = create((set, get) => ({
   layoutTemplate: defaultTemplate,
   layoutTemplateName: 'Default Template',
   setLayoutTemplate: (template, name) => set({ layoutTemplate: template, layoutTemplateName: name }),
-  clearLayoutTemplate: () => set({ layoutTemplate: defaultTemplate, layoutTemplateName: 'Default Template' }),
+  clearLayoutTemplate: () => set({ layoutTemplate: null, layoutTemplateName: null }),
 
   // ── Global Customizations ─────────────────────────────────────────
   selectedFont: '',

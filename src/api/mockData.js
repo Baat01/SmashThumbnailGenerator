@@ -466,7 +466,7 @@ export const MOCK_SETS = [
             },
             "character": {
               "id": 81,
-              "name": "MinMin"
+              "name": "Min Min"
             }
           }
         ]
@@ -545,7 +545,7 @@ export const MOCK_SETS = [
             },
             "character": {
               "id": 81,
-              "name": "MinMin"
+              "name": "Min Min"
             }
           }
         ]
@@ -1720,7 +1720,7 @@ export const MOCK_SETS = [
             },
             "character": {
               "id": 81,
-              "name": "MinMin"
+              "name": "Min Min"
             }
           },
           {
@@ -1957,7 +1957,7 @@ export const MOCK_SETS = [
             },
             "character": {
               "id": 81,
-              "name": "MinMin"
+              "name": "Min Min"
             }
           },
           {
@@ -2362,7 +2362,7 @@ export const MOCK_SETS = [
             },
             "character": {
               "id": 81,
-              "name": "MinMin"
+              "name": "Min Min"
             }
           }
         ]
